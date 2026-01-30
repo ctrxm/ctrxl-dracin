@@ -27,7 +27,7 @@ import { useWatchHistory, useLastWatchedEpisode, useVideoProgress } from "@/hook
 import { toast } from "sonner";
 
 export default function Watch() {
-  const { id, episode: episodeParam } = useParams<{ id: string; episode?: string }>();
+  const { source, id, episode: episodeParam } = useParams<{ source: string; id: string; episode?: string }>();
   const [, setLocation] = useLocation();
   const episodeIndex = parseInt(episodeParam || "0", 10);
   
@@ -65,8 +65,8 @@ export default function Watch() {
       try {
         setLoading(true);
         const [dramaData, episodesData] = await Promise.all([
-          getDramaDetail(id),
-          getAllEpisodes(id),
+          getDramaDetail(id, source as any),
+          getAllEpisodes(id, source as any),
         ]);
         setDrama(dramaData);
         setEpisodes(episodesData);
@@ -181,7 +181,7 @@ export default function Watch() {
     if (episodeIndex < episodes.length - 1) {
       toast("Melanjutkan ke episode berikutnya...");
       setTimeout(() => {
-        setLocation(`/watch/${id}/${episodeIndex + 1}`);
+        setLocation(`/watch/${source}/${id}/${episodeIndex + 1}`);
       }, 2000);
     }
   }, [episodeIndex, episodes.length, id, setLocation]);
@@ -236,7 +236,7 @@ export default function Watch() {
 
   const goToEpisode = useCallback((index: number) => {
     setShowEpisodeDrawer(false);
-    setLocation(`/watch/${id}/${index}`);
+    setLocation(`/watch/${source}/${id}/${index}`);
   }, [id, setLocation]);
 
   // Optimize video element setup

@@ -173,7 +173,7 @@ export default function DramaDetail() {
               <div className="absolute inset-0 ring-1 ring-white/10 rounded-2xl" />
               
               {/* Play overlay on hover */}
-              <Link href={`/watch/${drama.bookId}/${lastWatched || 0}`}>
+              <Link href={`/watch/${source}/${drama.bookId}/${lastWatched || 0}`}>
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
                   <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center glow-primary">
                     <Play className="w-8 h-8 text-white fill-white ml-1" />
@@ -237,7 +237,7 @@ export default function DramaDetail() {
 
             {/* Desktop Actions */}
             <div className="hidden md:flex gap-3">
-              <Link href={`/watch/${drama.bookId}/${lastWatched || 0}`}>
+              <Link href={`/watch/${source}/${drama.bookId}/${lastWatched || 0}`}>
                 <Button size="lg" className="bg-primary hover:bg-primary/90 gap-2 glow-primary px-8">
                   <Play className="w-5 h-5 fill-current" />
                   {lastWatched > 0 ? "Lanjutkan" : "Tonton Sekarang"}
@@ -293,7 +293,7 @@ export default function DramaDetail() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: index * 0.01 }}
                 >
-                  <Link href={`/watch/${drama.bookId}/${episode.chapterIndex}`}>
+                  <Link href={`/watch/${source}/${drama.bookId}/${episode.chapterIndex}`}>
                     <motion.button
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.95 }}
@@ -338,7 +338,7 @@ export default function DramaDetail() {
       {/* Mobile Sticky CTA */}
       <div className="fixed bottom-20 left-0 right-0 p-4 md:hidden safe-bottom z-40">
         <div className="glass-card rounded-2xl p-3">
-          <Link href={`/watch/${drama.bookId}/${lastWatched || 0}`}>
+          <Link href={`/watch/${source}/${drama.bookId}/${lastWatched || 0}`}>
             <Button className="w-full bg-primary hover:bg-primary/90 gap-2 h-14 text-lg glow-primary rounded-xl">
               <Play className="w-6 h-6 fill-current" />
               {lastWatched > 0 ? `Lanjutkan EP ${lastWatched + 1}` : "Tonton Sekarang"}

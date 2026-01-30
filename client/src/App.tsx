@@ -24,7 +24,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/drama/:source/:id" component={DramaDetail} />
-      <Route path="/watch/:id/:episode?" component={Watch} />
+      <Route path="/watch/:source/:id/:episode?" component={Watch} />
       <Route path="/search" component={Search} />
       <Route path="/bookmarks" component={Bookmarks} />
 

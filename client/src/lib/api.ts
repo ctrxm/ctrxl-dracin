@@ -337,7 +337,31 @@ export async function getDramaDetail(bookId: string, source: SourceType = 'drama
 
 export async function getAllEpisodes(bookId: string, source: SourceType = 'dramabox'): Promise<Episode[]> {
   try {
-    const data = await fetchFromSource<Episode[]>(source, 'allepisode', `?bookId=${bookId}`);
+    // NetShort uses different parameter name
+    const paramName = source === 'netshort' ? 'shortPlayId' : 'bookId';
+    const data = await fetchFromSource<any>(source, 'allepisode', `?${paramName}=${bookId}`);
+    
+    // NetShort has different response format - returns object with shortPlayEpisodeInfos array
+    if (source === 'netshort' && data && typeof data === 'object') {
+      const episodes = (data as any).shortPlayEpisodeInfos || [];
+      // Transform NetShort episode format
+      return episodes.map((ep: any) => ({
+        chapterId: ep.episodeId || '',
+        chapterIndex: ep.episodeNo || 0,
+        chapterName: `Episode ${ep.episodeNo}`,
+        isCharge: ep.isVip ? 1 : 0,
+        cdnList: [{
+          cdnDomain: '',
+          isDefault: 1,
+          videoPathList: [{
+            quality: 1080,
+            videoPath: ep.playVoucher || '',
+            isDefault: 1
+          }]
+        }]
+      }));
+    }
+    
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error(`Error fetching episodes for ${source}:`, error);
@@ -347,14 +371,14 @@ export async function getAllEpisodes(bookId: string, source: SourceType = 'drama
 
 // Multi-source: Get content from all sources
 export async function getAllSourcesTrending(): Promise<Drama[]> {
-  const sources: SourceType[] = ['dramabox', 'netshort', 'melolo'];
+  const sources: SourceType[] = ['dramabox', 'netshort'];
   const promises = sources.map(source => getTrending(source));
   const results = await Promise.all(promises);
   return results.flat();
 }
 
 export async function getAllSourcesLatest(): Promise<Drama[]> {
-  const sources: SourceType[] = ['dramabox', 'netshort', 'melolo'];
+  const sources: SourceType[] = ['dramabox', 'netshort'];
   const promises = sources.map(source => getLatest(source));
   const results = await Promise.all(promises);
   return results.flat();
