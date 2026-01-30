@@ -1,0 +1,6 @@
+name = "ctrxl-dracin"
+compatibility_date = "2026-01-30"
+
+# Static assets configuration for Cloudflare Pages
+[assets]
+directory = "./dist/public"

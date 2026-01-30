@@ -1,0 +1,3 @@
+# SPA routing - redirect all requests to index.html
+# except for files that exist (static assets)
+/*    /index.html   200
