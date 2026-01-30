@@ -87,6 +87,28 @@ export default function Watch() {
     fetchData();
   }, [id, episodeIndex, quality]);
 
+  // Cleanup video element on unmount
+  useEffect(() => {
+    const video = videoRef.current;
+    
+    return () => {
+      // Cleanup video element to prevent memory leaks
+      if (video) {
+        video.pause();
+        video.src = '';
+        video.load();
+      }
+      
+      // Clear all timers
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      if (progressSaveTimerRef.current) {
+        clearTimeout(progressSaveTimerRef.current);
+      }
+    };
+  }, []);
+
   // Update last watched
   useEffect(() => {
     if (id && currentEpisode) {
