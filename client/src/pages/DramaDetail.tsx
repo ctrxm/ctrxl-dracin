@@ -202,7 +202,7 @@ export default function DramaDetail() {
 
               {/* Actions */}
               <div className="flex flex-wrap gap-3">
-                <Link href={`/watch/${drama.bookId}/${lastWatched || 0}`}>
+                <Link href={`/watch/${source}/${drama.bookId}/${lastWatched || 0}`}>
                   <Button 
                     size="lg" 
                     className="bg-primary hover:bg-primary/90 text-white gap-2 btn-primary-glow transition-corporate px-8 font-bold"
@@ -254,7 +254,7 @@ export default function DramaDetail() {
 
         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
           {displayedEpisodes.map((episode, index) => (
-            <Link key={episode.chapterId} href={`/watch/${drama.bookId}/${index}`}>
+            <Link key={episode.chapterId} href={`/watch/${source}/${drama.bookId}/${index}`}>
               <motion.button
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
