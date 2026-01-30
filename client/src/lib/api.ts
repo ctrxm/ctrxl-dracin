@@ -35,9 +35,9 @@ export const SOURCES = {
     icon: '📺',
     color: 'from-blue-500 to-cyan-600',
     endpoints: {
-      trending: '/trending',
-      latest: '/latest',
-      foryou: null, // Not available
+      trending: '/theaters', // NetShort uses theaters for trending
+      latest: '/foryou', // NetShort uses foryou for latest
+      foryou: '/foryou',
       search: '/search',
       detail: '/detail',
       allepisode: '/allepisode'
@@ -138,10 +138,78 @@ async function fetchFromSource<T>(
   return fetchWithCache<T>(url);
 }
 
+// Transform Melolo response format to Drama format
+function transformMeloloData(data: any): Drama[] {
+  if (!data || typeof data !== 'object') return [];
+  
+  const books = data.books || [];
+  if (!Array.isArray(books)) return [];
+  
+  return books.map((book: any) => ({
+    bookId: book.book_id || book.media_id || '',
+    bookName: book.book_name || '',
+    coverWap: book.thumb_url || '',
+    cover: book.thumb_url || '',
+    chapterCount: book.serial_count || book.last_chapter_index || 0,
+    introduction: book.abstract || book.sub_abstract || '',
+    tags: book.stat_infos || [],
+    playCount: book.read_count || '',
+    rankVo: book.is_hot ? {
+      rankType: 1,
+      hotCode: book.read_count || '',
+      sort: 0
+    } : undefined
+  }));
+}
+
+// Transform NetShort response format to Drama format
+function transformNetShortData(data: any[]): Drama[] {
+  if (!Array.isArray(data)) return [];
+  
+  const dramas: Drama[] = [];
+  
+  for (const group of data) {
+    if (group.contentInfos && Array.isArray(group.contentInfos)) {
+      for (const item of group.contentInfos) {
+        dramas.push({
+          bookId: item.shortPlayId || item.id || '',
+          bookName: item.shortPlayName || '',
+          coverWap: item.shortPlayCover || item.groupShortPlayCover || '',
+          cover: item.shortPlayCover || item.groupShortPlayCover || '',
+          chapterCount: item.episodeCount || 0,
+          introduction: item.shortPlayLabels || '',
+          tags: item.labelArray || [],
+          playCount: item.heatScoreShow || '',
+          rankVo: item.heatScore ? {
+            rankType: 1,
+            hotCode: item.heatScoreShow || '',
+            sort: 0
+          } : undefined
+        });
+      }
+    }
+  }
+  
+  return dramas;
+}
+
 // DramaBox API with graceful fallback
 export async function getTrending(source: SourceType = 'dramabox'): Promise<Drama[]> {
   try {
-    const data = await fetchFromSource<Drama[]>(source, 'trending');
+    const data = await fetchFromSource<any>(source, 'trending');
+    
+    // NetShort has different response format
+    if (source === 'netshort') {
+      const transformed = transformNetShortData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
+    // Melolo has different response format
+    if (source === 'melolo') {
+      const transformed = transformMeloloData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
     return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
   } catch (error) {
     console.error(`Error fetching trending for ${source}:`, error);
@@ -151,7 +219,20 @@ export async function getTrending(source: SourceType = 'dramabox'): Promise<Dram
 
 export async function getLatest(source: SourceType = 'dramabox'): Promise<Drama[]> {
   try {
-    const data = await fetchFromSource<Drama[]>(source, 'latest');
+    const data = await fetchFromSource<any>(source, 'latest');
+    
+    // NetShort has different response format
+    if (source === 'netshort') {
+      const transformed = transformNetShortData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
+    // Melolo has different response format
+    if (source === 'melolo') {
+      const transformed = transformMeloloData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
     return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
   } catch (error) {
     console.error(`Error fetching latest for ${source}:`, error);
@@ -161,7 +242,14 @@ export async function getLatest(source: SourceType = 'dramabox'): Promise<Drama[
 
 export async function getForYou(source: SourceType = 'dramabox'): Promise<Drama[]> {
   try {
-    const data = await fetchFromSource<Drama[]>(source, 'foryou');
+    const data = await fetchFromSource<any>(source, 'foryou');
+    
+    // NetShort has different response format
+    if (source === 'netshort') {
+      const transformed = transformNetShortData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
     return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
   } catch (error) {
     console.error(`Error fetching foryou for ${source}:`, error);
