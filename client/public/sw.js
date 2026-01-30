@@ -5,8 +5,9 @@
  * IMPORTANT: Video requests are NOT cached to prevent lag/skip issues
  */
 
-const CACHE_NAME = 'ctrxl-dracin-v3';
-const STATIC_CACHE_NAME = 'ctrxl-dracin-static-v3';
+const CACHE_VERSION = '1.0.1';
+const CACHE_NAME = `ctrxl-dracin-v${CACHE_VERSION}`;
+const STATIC_CACHE_NAME = `ctrxl-dracin-static-v${CACHE_VERSION}`;
 
 const urlsToCache = [
   '/',

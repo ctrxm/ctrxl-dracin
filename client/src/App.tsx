@@ -18,6 +18,9 @@ import Search from "./pages/Search";
 import Bookmarks from "./pages/Bookmarks";
 
 import BottomNav from "./components/BottomNav";
+import { useEffect } from "react";
+import { startVersionCheck } from "./lib/version-checker";
+import { toast } from "sonner";
 
 function Router() {
   return (
@@ -35,6 +38,21 @@ function Router() {
 }
 
 function App() {
+  // Version checking for cache busting
+  useEffect(() => {
+    const cleanup = startVersionCheck(() => {
+      toast.info("New version available!", {
+        description: "Reloading to get the latest updates...",
+        duration: 3000,
+      });
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    });
+    
+    return cleanup;
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
