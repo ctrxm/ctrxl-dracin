@@ -3,9 +3,10 @@
  * Design: Neo-Noir Cinema
  * 
  * Features:
+ * - Multi-source tabs (DramaBox, ReelShort, NetShort, Melolo, FlickReels, FreeReels)
  * - Fullscreen hero banner with Ken Burns effect
  * - Auto-rotating featured drama
- * - Trending, Latest, For You sections
+ * - Trending, Latest, For You sections per source
  * - Skeleton loaders everywhere
  */
 
@@ -15,7 +16,8 @@ import { Link } from "wouter";
 import { Play, ChevronRight, Bookmark, BookmarkCheck, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DramaCard, { DramaCardSkeleton } from "@/components/DramaCard";
-import { getTrending, getLatest, getForYou, getCoverUrl, type Drama } from "@/lib/api";
+import SourceTabs from "@/components/SourceTabs";
+import { getTrending, getLatest, getForYou, getCoverUrl, type Drama, type SourceType } from "@/lib/api";
 import { useBookmarks, useWatchHistory } from "@/hooks/useLocalStorage";
 import { toast } from "sonner";
 
@@ -27,6 +29,7 @@ const heroBackgrounds = [
 ];
 
 export default function Home() {
+  const [activeSource, setActiveSource] = useState<SourceType>('dramabox');
   const [trending, setTrending] = useState<Drama[]>([]);
   const [latest, setLatest] = useState<Drama[]>([]);
   const [forYou, setForYou] = useState<Drama[]>([]);
@@ -39,15 +42,15 @@ export default function Home() {
   const { getContinueWatching } = useWatchHistory();
   const continueWatching = getContinueWatching();
 
-  // Fetch all data
+  // Fetch data when source changes
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
         const [trendingData, latestData, forYouData] = await Promise.all([
-          getTrending(),
-          getLatest(),
-          getForYou(),
+          getTrending(activeSource),
+          getLatest(activeSource),
+          getForYou(activeSource),
         ]);
         setTrending(trendingData);
         setLatest(latestData);
@@ -61,7 +64,7 @@ export default function Home() {
       }
     }
     fetchData();
-  }, []);
+  }, [activeSource]);
 
   // Auto-rotate hero
   useEffect(() => {
@@ -85,6 +88,11 @@ export default function Home() {
       icon: added ? <BookmarkCheck className="w-4 h-4 text-primary" /> : <Bookmark className="w-4 h-4" />,
     });
   }, [toggleBookmark]);
+
+  const handleSourceChange = (source: SourceType) => {
+    setActiveSource(source);
+    setHeroIndex(0);
+  };
 
   if (error) {
     return (
@@ -229,6 +237,11 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Source Tabs */}
+      <div className="container mt-8">
+        <SourceTabs activeSource={activeSource} onSourceChange={handleSourceChange} />
+      </div>
+
       {/* Continue Watching Section */}
       {continueWatching.length > 0 && (
         <Section title="Lanjutkan Menonton" href="/bookmarks">
@@ -281,19 +294,29 @@ export default function Home() {
           {loading
             ? Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="flex-shrink-0 snap-start">
-                  <DramaCardSkeleton size="lg" />
+                  <DramaCardSkeleton />
                 </div>
               ))
-            : trending.slice(0, 10).map((drama, index) => (
-                <div key={drama.bookId} className="flex-shrink-0 snap-start">
-                  <DramaCard drama={drama} index={index} size="lg" showRank />
-                </div>
+            : trending.map((drama, index) => (
+                <motion.div
+                  key={drama.bookId}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex-shrink-0 snap-start"
+                >
+                  <DramaCard
+                    drama={drama}
+                    isBookmarked={isBookmarked(drama.bookId)}
+                    onBookmark={() => handleBookmark(drama)}
+                  />
+                </motion.div>
               ))}
         </div>
       </Section>
 
       {/* Latest Section */}
-      <Section title="Terbaru" href="/search?filter=latest" loading={loading}>
+      <Section title="Drama Terbaru" href="/search?filter=latest" loading={loading}>
         <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
           {loading
             ? Array.from({ length: 6 }).map((_, i) => (
@@ -301,16 +324,26 @@ export default function Home() {
                   <DramaCardSkeleton />
                 </div>
               ))
-            : latest.slice(0, 10).map((drama, index) => (
-                <div key={drama.bookId} className="flex-shrink-0 snap-start">
-                  <DramaCard drama={drama} index={index} />
-                </div>
+            : latest.map((drama, index) => (
+                <motion.div
+                  key={drama.bookId}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex-shrink-0 snap-start"
+                >
+                  <DramaCard
+                    drama={drama}
+                    isBookmarked={isBookmarked(drama.bookId)}
+                    onBookmark={() => handleBookmark(drama)}
+                  />
+                </motion.div>
               ))}
         </div>
       </Section>
 
       {/* For You Section */}
-      <Section title="Untukmu" href="/search?filter=foryou" loading={loading}>
+      <Section title="Untuk Kamu" href="/search?filter=foryou" loading={loading}>
         <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
           {loading
             ? Array.from({ length: 6 }).map((_, i) => (
@@ -318,10 +351,20 @@ export default function Home() {
                   <DramaCardSkeleton />
                 </div>
               ))
-            : forYou.slice(0, 10).map((drama, index) => (
-                <div key={drama.bookId} className="flex-shrink-0 snap-start">
-                  <DramaCard drama={drama} index={index} />
-                </div>
+            : forYou.map((drama, index) => (
+                <motion.div
+                  key={drama.bookId}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex-shrink-0 snap-start"
+                >
+                  <DramaCard
+                    drama={drama}
+                    isBookmarked={isBookmarked(drama.bookId)}
+                    onBookmark={() => handleBookmark(drama)}
+                  />
+                </motion.div>
               ))}
         </div>
       </Section>
@@ -329,22 +372,24 @@ export default function Home() {
   );
 }
 
-// Section component
+// Section Component
 interface SectionProps {
   title: string;
   href?: string;
-  loading?: boolean;
   children: React.ReactNode;
+  loading?: boolean;
 }
 
-function Section({ title, href, loading, children }: SectionProps) {
+function Section({ title, href, children, loading }: SectionProps) {
   return (
-    <section className="container py-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-2xl md:text-3xl text-foreground">{title}</h2>
+    <section className="container py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-display text-2xl md:text-3xl text-foreground">
+          {title}
+        </h2>
         {href && !loading && (
           <Link href={href}>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary gap-1">
+            <Button variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
               Lihat Semua
               <ChevronRight className="w-4 h-4" />
             </Button>

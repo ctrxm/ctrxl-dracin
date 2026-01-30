@@ -17,6 +17,8 @@ interface DramaCardProps {
   index?: number;
   size?: "sm" | "md" | "lg";
   showRank?: boolean;
+  isBookmarked?: boolean;
+  onBookmark?: () => void;
 }
 
 export default function DramaCard({ drama, index = 0, size = "md", showRank = false }: DramaCardProps) {
