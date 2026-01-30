@@ -26,6 +26,7 @@ import {
   type DramaDetail, type Episode 
 } from "@/lib/api";
 import { useWatchHistory, useLastWatchedEpisode, useVideoProgress } from "@/hooks/useLocalStorage";
+import { useVideoOptimization, useVideoPreload } from "@/hooks/useVideoOptimization";
 import { toast } from "sonner";
 
 export default function Watch() {
@@ -49,6 +50,7 @@ export default function Watch() {
   const [showControls, setShowControls] = useState(true);
   const [showEpisodeDrawer, setShowEpisodeDrawer] = useState(false);
   const [quality, setQuality] = useState(720);
+  const [isBuffering, setIsBuffering] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,6 +58,18 @@ export default function Watch() {
   const { updateHistory } = useWatchHistory();
   const [, setLastWatched] = useLastWatchedEpisode(id || "");
   const [savedProgress, setSavedProgress] = useVideoProgress(id || "", episodeIndex);
+
+  // Video optimization
+  useVideoOptimization({
+    videoRef,
+    onBuffering: setIsBuffering,
+    adaptiveQuality: true,
+  });
+
+  // Preload next episode
+  const nextEpisode = episodes[episodeIndex + 1];
+  const nextVideoUrl = nextEpisode ? getVideoUrl(nextEpisode, quality) : null;
+  useVideoPreload(nextVideoUrl, isPlaying && episodeIndex < episodes.length - 1);
 
   // Fetch drama and episodes
   useEffect(() => {
@@ -248,6 +262,8 @@ export default function Watch() {
         className="w-full h-full object-contain"
         playsInline
         autoPlay
+        preload="auto"
+        crossOrigin="anonymous"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
@@ -259,9 +275,12 @@ export default function Watch() {
       />
 
       {/* Loading overlay */}
-      {videoLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-          <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      {(videoLoading || isBuffering) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <p className="text-white/80 text-sm">Buffering...</p>
+          </div>
         </div>
       )}
 
