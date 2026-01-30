@@ -17,7 +17,7 @@ import { Play, ChevronRight, Bookmark, BookmarkCheck, Info } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import DramaCard, { DramaCardSkeleton } from "@/components/DramaCard";
 import SourceTabs from "@/components/SourceTabs";
-import { getTrending, getLatest, getForYou, getCoverUrl, type Drama, type SourceType } from "@/lib/api";
+import { getTrending, getLatest, getForYou, getCoverUrl, isEndpointAvailable, type Drama, type SourceType } from "@/lib/api";
 import { useBookmarks, useWatchHistory } from "@/hooks/useLocalStorage";
 import { toast } from "sonner";
 
@@ -342,7 +342,8 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* For You Section */}
+      {/* For You Section - Only show if endpoint available */}
+      {isEndpointAvailable(activeSource, 'foryou') && (
       <Section title="Untuk Kamu" href="/search?filter=foryou" loading={loading}>
         <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
           {loading
@@ -368,6 +369,7 @@ export default function Home() {
               ))}
         </div>
       </Section>
+      )}
     </div>
   );
 }

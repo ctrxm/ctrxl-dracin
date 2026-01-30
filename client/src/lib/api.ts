@@ -3,6 +3,7 @@
  * Design: Neo-Noir Cinema
  * 
  * Multi-Source Support: DramaBox, ReelShort, NetShort, Melolo, FlickReels, FreeReels
+ * With graceful fallback for missing endpoints
  */
 
 const API_BASE = "https://api.sansekai.my.id/api";
@@ -16,42 +17,90 @@ export const SOURCES = {
     name: 'DramaBox',
     description: 'Premium Chinese Drama',
     icon: '🎬',
-    color: 'from-amber-500 to-orange-600'
+    color: 'from-amber-500 to-orange-600',
+    endpoints: {
+      trending: '/trending',
+      latest: '/latest',
+      foryou: '/foryou',
+      search: '/search',
+      detail: '/detail',
+      allepisode: '/allepisode'
+    }
   },
   reelshort: {
     id: 'reelshort',
     name: 'ReelShort',
     description: 'Short Drama Series',
     icon: '🎞️',
-    color: 'from-purple-500 to-pink-600'
+    color: 'from-purple-500 to-pink-600',
+    endpoints: {
+      trending: '/homepage', // ReelShort uses homepage
+      latest: '/homepage',
+      foryou: '/homepage',
+      search: '/search',
+      detail: '/detail',
+      allepisode: '/allepisode'
+    }
   },
   netshort: {
     id: 'netshort',
     name: 'NetShort',
     description: 'Network Short Videos',
     icon: '📺',
-    color: 'from-blue-500 to-cyan-600'
+    color: 'from-blue-500 to-cyan-600',
+    endpoints: {
+      trending: '/trending',
+      latest: '/latest',
+      foryou: null, // Not available
+      search: '/search',
+      detail: '/detail',
+      allepisode: '/allepisode'
+    }
   },
   melolo: {
     id: 'melolo',
     name: 'Melolo',
     description: 'Melodrama Collection',
     icon: '💝',
-    color: 'from-rose-500 to-red-600'
+    color: 'from-rose-500 to-red-600',
+    endpoints: {
+      trending: '/trending',
+      latest: '/latest',
+      foryou: null, // Not available
+      search: '/search',
+      detail: '/detail',
+      allepisode: '/stream'
+    }
   },
   flickreels: {
     id: 'flickreels',
     name: 'FlickReels',
     description: 'Quick Flick Stories',
     icon: '⚡',
-    color: 'from-yellow-500 to-amber-600'
+    color: 'from-yellow-500 to-amber-600',
+    endpoints: {
+      trending: '/trending',
+      latest: '/latest',
+      foryou: null, // Unknown, assume not available
+      search: '/search',
+      detail: '/detail',
+      allepisode: '/allepisode'
+    }
   },
   freereels: {
     id: 'freereels',
     name: 'FreeReels',
     description: 'Free Drama Content',
     icon: '🎪',
-    color: 'from-green-500 to-emerald-600'
+    color: 'from-green-500 to-emerald-600',
+    endpoints: {
+      trending: '/trending',
+      latest: '/latest',
+      foryou: null, // Unknown, assume not available
+      search: '/search',
+      detail: '/detail',
+      allepisode: '/allepisode'
+    }
   }
 } as const;
 
@@ -114,75 +163,144 @@ async function fetchWithCache<T>(url: string): Promise<T> {
   return data;
 }
 
-// Generic function to fetch from any source
-async function fetchFromSource<T>(source: SourceType, endpoint: string): Promise<T> {
-  const url = `${API_BASE}/${source}/${endpoint}`;
+// Generic function to fetch from any source with endpoint mapping
+async function fetchFromSource<T>(
+  source: SourceType, 
+  endpointType: 'trending' | 'latest' | 'foryou' | 'search' | 'detail' | 'allepisode',
+  params?: string
+): Promise<T> {
+  const sourceConfig = SOURCES[source];
+  const endpoint = sourceConfig.endpoints[endpointType];
+  
+  // If endpoint not available for this source, return empty array
+  if (!endpoint) {
+    console.warn(`Endpoint '${endpointType}' not available for source '${source}'`);
+    return [] as unknown as T;
+  }
+  
+  const url = `${API_BASE}/${source}${endpoint}${params || ''}`;
   return fetchWithCache<T>(url);
 }
 
-// DramaBox API
+// DramaBox API with graceful fallback
 export async function getTrending(source: SourceType = 'dramabox'): Promise<Drama[]> {
-  const data = await fetchFromSource<Drama[]>(source, 'trending');
-  return data.map(d => ({ ...d, source }));
+  try {
+    const data = await fetchFromSource<Drama[]>(source, 'trending');
+    return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
+  } catch (error) {
+    console.error(`Error fetching trending for ${source}:`, error);
+    return [];
+  }
 }
 
 export async function getLatest(source: SourceType = 'dramabox'): Promise<Drama[]> {
-  const data = await fetchFromSource<Drama[]>(source, 'latest');
-  return data.map(d => ({ ...d, source }));
+  try {
+    const data = await fetchFromSource<Drama[]>(source, 'latest');
+    return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
+  } catch (error) {
+    console.error(`Error fetching latest for ${source}:`, error);
+    return [];
+  }
 }
 
 export async function getForYou(source: SourceType = 'dramabox'): Promise<Drama[]> {
-  const data = await fetchFromSource<Drama[]>(source, 'foryou');
-  return data.map(d => ({ ...d, source }));
+  try {
+    const data = await fetchFromSource<Drama[]>(source, 'foryou');
+    return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
+  } catch (error) {
+    console.error(`Error fetching foryou for ${source}:`, error);
+    return [];
+  }
 }
 
 export async function getPopularSearch(source: SourceType = 'dramabox'): Promise<Drama[]> {
-  const data = await fetchFromSource<Drama[]>(source, 'populersearch');
-  return data.map(d => ({ ...d, source }));
+  try {
+    const data = await fetchFromSource<Drama[]>(source, 'search', '?query=popular');
+    return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
+  } catch (error) {
+    console.error(`Error fetching popular search for ${source}:`, error);
+    return [];
+  }
 }
 
 export async function getDubIndo(source: SourceType = 'dramabox'): Promise<Drama[]> {
-  const data = await fetchFromSource<Drama[]>(source, 'dubindo');
-  return data.map(d => ({ ...d, source }));
+  // Only available for DramaBox
+  if (source !== 'dramabox') return [];
+  
+  try {
+    const url = `${API_BASE}/dramabox/dubindo`;
+    const data = await fetchWithCache<Drama[]>(url);
+    return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
+  } catch (error) {
+    console.error('Error fetching dub indo:', error);
+    return [];
+  }
 }
 
 export async function getRandomDrama(source: SourceType = 'dramabox'): Promise<Drama[]> {
-  const data = await fetchFromSource<Drama[]>(source, 'randomdrama');
-  return data.map(d => ({ ...d, source }));
+  // Only available for DramaBox
+  if (source !== 'dramabox') return [];
+  
+  try {
+    const url = `${API_BASE}/dramabox/randomdrama`;
+    const data = await fetchWithCache<Drama[]>(url);
+    return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
+  } catch (error) {
+    console.error('Error fetching random drama:', error);
+    return [];
+  }
 }
 
 export async function searchDrama(query: string, source: SourceType = 'dramabox'): Promise<Drama[]> {
   if (!query.trim()) return [];
-  const data = await fetchFromSource<Drama[]>(source, `search?query=${encodeURIComponent(query)}`);
-  return data.map(d => ({ ...d, source }));
+  
+  try {
+    const data = await fetchFromSource<Drama[]>(source, 'search', `?query=${encodeURIComponent(query)}`);
+    return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
+  } catch (error) {
+    console.error(`Error searching drama for ${source}:`, error);
+    return [];
+  }
 }
 
-export async function getDramaDetail(bookId: string, source: SourceType = 'dramabox'): Promise<DramaDetail> {
-  const data = await fetchFromSource<DramaDetail>(source, `detail?bookId=${bookId}`);
-  return { ...data, source };
+export async function getDramaDetail(bookId: string, source: SourceType = 'dramabox'): Promise<DramaDetail | null> {
+  try {
+    const data = await fetchFromSource<DramaDetail>(source, 'detail', `?bookId=${bookId}`);
+    return data ? { ...data, source } : null;
+  } catch (error) {
+    console.error(`Error fetching drama detail for ${source}:`, error);
+    return null;
+  }
 }
 
 export async function getAllEpisodes(bookId: string, source: SourceType = 'dramabox'): Promise<Episode[]> {
-  return fetchFromSource<Episode[]>(source, `allepisode?bookId=${bookId}`);
+  try {
+    const data = await fetchFromSource<Episode[]>(source, 'allepisode', `?bookId=${bookId}`);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error(`Error fetching episodes for ${source}:`, error);
+    return [];
+  }
 }
 
 // Multi-source: Get content from all sources
 export async function getAllSourcesTrending(): Promise<Drama[]> {
   const sources: SourceType[] = ['dramabox', 'reelshort', 'netshort', 'melolo', 'flickreels', 'freereels'];
-  const promises = sources.map(source => 
-    getTrending(source).catch(() => [] as Drama[])
-  );
+  const promises = sources.map(source => getTrending(source));
   const results = await Promise.all(promises);
   return results.flat();
 }
 
 export async function getAllSourcesLatest(): Promise<Drama[]> {
   const sources: SourceType[] = ['dramabox', 'reelshort', 'netshort', 'melolo', 'flickreels', 'freereels'];
-  const promises = sources.map(source => 
-    getLatest(source).catch(() => [] as Drama[])
-  );
+  const promises = sources.map(source => getLatest(source));
   const results = await Promise.all(promises);
   return results.flat();
+}
+
+// Helper to check if endpoint is available for source
+export function isEndpointAvailable(source: SourceType, endpoint: keyof typeof SOURCES.dramabox.endpoints): boolean {
+  return SOURCES[source].endpoints[endpoint] !== null;
 }
 
 // Helper to get cover image URL
@@ -216,7 +334,7 @@ export function getAPIInfo() {
     apiBase: API_BASE,
     provider: "Sansekai Multi-Source API",
     sources: Object.values(SOURCES),
-    version: "2.0.0"
+    version: "2.1.0"
   };
 }
 
