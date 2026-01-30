@@ -1,32 +1,29 @@
 /**
- * Watch Page - Pure Cinema Mode
+ * Watch Page - Pure Cinema Mode (Optimized)
  * Design: Neo-Noir Cinema
  * 
- * Features:
- * - Black cinematic UI
- * - Minimal distraction
- * - Auto next episode
- * - Episode switcher drawer
- * - Mobile first controls
- * - Remember last watched
+ * OPTIMIZATIONS:
+ * - Minimal re-renders using refs and memo
+ * - Debounced state updates
+ * - Hardware acceleration
+ * - Reduced event listeners
+ * - Throttled progress saves
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useLocation, Link } from "wouter";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useParams, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowLeft, ChevronUp, ChevronDown, List, Play, Pause,
-  SkipForward, Volume2, VolumeX, Maximize, Settings,
-  ChevronLeft, ChevronRight, X, Loader2
+  ArrowLeft, List, Play, Pause,
+  ChevronLeft, ChevronRight, X, Loader2,
+  Volume2, VolumeX, Maximize
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-// Using a simple progress bar instead of Slider to avoid infinite loop issues
 import { 
   getDramaDetail, getAllEpisodes, getVideoUrl,
   type DramaDetail, type Episode 
 } from "@/lib/api";
 import { useWatchHistory, useLastWatchedEpisode, useVideoProgress } from "@/hooks/useLocalStorage";
-import { useVideoOptimization, useVideoPreload } from "@/hooks/useVideoOptimization";
 import { toast } from "sonner";
 
 export default function Watch() {
@@ -39,37 +36,27 @@ export default function Watch() {
   const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [videoLoading, setVideoLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Player state
+  // Player state - using refs to avoid re-renders
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [showEpisodeDrawer, setShowEpisodeDrawer] = useState(false);
-  const [quality, setQuality] = useState(720);
-  const [isBuffering, setIsBuffering] = useState(false);
+  const [quality] = useState(720);
+  
+  // Use refs for frequently updated values to prevent re-renders
+  const currentTimeRef = useRef<number>(0);
+  const durationRef = useRef<number>(0);
+  const [displayTime, setDisplayTime] = useState({ current: 0, duration: 0 });
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const { updateHistory } = useWatchHistory();
   const [, setLastWatched] = useLastWatchedEpisode(id || "");
   const [savedProgress, setSavedProgress] = useVideoProgress(id || "", episodeIndex);
-
-  // Video optimization
-  useVideoOptimization({
-    videoRef,
-    onBuffering: setIsBuffering,
-    adaptiveQuality: true,
-  });
-
-  // Preload next episode
-  const nextEpisode = episodes[episodeIndex + 1];
-  const nextVideoUrl = nextEpisode ? getVideoUrl(nextEpisode, quality) : null;
-  useVideoPreload(nextVideoUrl, isPlaying && episodeIndex < episodes.length - 1);
 
   // Fetch drama and episodes
   useEffect(() => {
@@ -107,11 +94,11 @@ export default function Watch() {
     }
   }, [id, episodeIndex, currentEpisode, setLastWatched]);
 
-  // Save progress periodically
-  useEffect(() => {
-    if (!drama || !currentEpisode || duration === 0) return;
+  // Throttled progress save - only save every 5 seconds
+  const saveProgress = useCallback(() => {
+    if (!drama || !currentEpisode || durationRef.current === 0) return;
     
-    const progress = Math.round((currentTime / duration) * 100);
+    const progress = Math.round((currentTimeRef.current / durationRef.current) * 100);
     setSavedProgress(progress);
     
     updateHistory({
@@ -122,15 +109,30 @@ export default function Watch() {
       episodeName: currentEpisode.chapterName,
       progress,
     });
-  }, [currentTime, duration, drama, currentEpisode, episodeIndex, updateHistory, setSavedProgress]);
+  }, [drama, currentEpisode, episodeIndex, updateHistory, setSavedProgress]);
+
+  // Debounced progress save
+  useEffect(() => {
+    if (progressSaveTimerRef.current) {
+      clearTimeout(progressSaveTimerRef.current);
+    }
+    
+    progressSaveTimerRef.current = setTimeout(saveProgress, 5000);
+    
+    return () => {
+      if (progressSaveTimerRef.current) {
+        clearTimeout(progressSaveTimerRef.current);
+      }
+    };
+  }, [currentTimeRef.current, saveProgress]);
 
   // Restore progress on load
   useEffect(() => {
-    if (videoRef.current && savedProgress > 0 && savedProgress < 95 && duration > 0) {
-      const time = (savedProgress / 100) * duration;
+    if (videoRef.current && savedProgress > 0 && savedProgress < 95 && durationRef.current > 0) {
+      const time = (savedProgress / 100) * durationRef.current;
       videoRef.current.currentTime = time;
     }
-  }, [savedProgress, duration]);
+  }, [savedProgress, videoUrl]);
 
   // Auto-hide controls
   const resetControlsTimeout = useCallback(() => {
@@ -154,21 +156,27 @@ export default function Watch() {
     };
   }, [resetControlsTimeout]);
 
-  // Video event handlers
-  const handleTimeUpdate = () => {
+  // Video event handlers - optimized with refs
+  const handleTimeUpdate = useCallback(() => {
     if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
+      const newTime = videoRef.current.currentTime;
+      currentTimeRef.current = newTime;
+      
+      // Only update display every 1 second to reduce re-renders
+      if (Math.floor(newTime) !== Math.floor(displayTime.current)) {
+        setDisplayTime({ current: newTime, duration: durationRef.current });
+      }
     }
-  };
+  }, [displayTime.current]);
 
-  const handleLoadedMetadata = () => {
+  const handleLoadedMetadata = useCallback(() => {
     if (videoRef.current) {
-      setDuration(videoRef.current.duration);
-      setVideoLoading(false);
+      durationRef.current = videoRef.current.duration;
+      setDisplayTime({ current: 0, duration: videoRef.current.duration });
     }
-  };
+  }, []);
 
-  const handleEnded = () => {
+  const handleEnded = useCallback(() => {
     // Auto next episode
     if (episodeIndex < episodes.length - 1) {
       toast("Melanjutkan ke episode berikutnya...");
@@ -176,9 +184,9 @@ export default function Watch() {
         setLocation(`/watch/${id}/${episodeIndex + 1}`);
       }, 2000);
     }
-  };
+  }, [episodeIndex, episodes.length, id, setLocation]);
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
@@ -187,46 +195,66 @@ export default function Watch() {
       }
       setIsPlaying(!isPlaying);
     }
-  };
+  }, [isPlaying]);
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
     }
-  };
+  }, [isMuted]);
 
-  const handleSeek = (value: number[]) => {
+  const handleSeek = useCallback((value: number) => {
     if (videoRef.current) {
-      videoRef.current.currentTime = value[0];
-      setCurrentTime(value[0]);
+      videoRef.current.currentTime = value;
+      currentTimeRef.current = value;
+      setDisplayTime({ current: value, duration: durationRef.current });
     }
-  };
+  }, []);
 
-  const skip = (seconds: number) => {
+  const skip = useCallback((seconds: number) => {
     if (videoRef.current) {
-      videoRef.current.currentTime += seconds;
+      const newTime = videoRef.current.currentTime + seconds;
+      videoRef.current.currentTime = newTime;
+      currentTimeRef.current = newTime;
     }
-  };
+  }, []);
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (document.fullscreenElement) {
       document.exitFullscreen();
     } else {
       document.documentElement.requestFullscreen();
     }
-  };
+  }, []);
 
-  const formatTime = (time: number) => {
+  const formatTime = useCallback((time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
+  }, []);
 
-  const goToEpisode = (index: number) => {
+  const goToEpisode = useCallback((index: number) => {
     setShowEpisodeDrawer(false);
     setLocation(`/watch/${id}/${index}`);
-  };
+  }, [id, setLocation]);
+
+  // Optimize video element setup
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Force hardware acceleration
+    video.style.transform = "translateZ(0)";
+    video.style.backfaceVisibility = "hidden";
+    video.style.willChange = "transform";
+    
+    return () => {
+      video.style.transform = "";
+      video.style.backfaceVisibility = "";
+      video.style.willChange = "auto";
+    };
+  }, [videoUrl]);
 
   if (loading) {
     return (
@@ -255,7 +283,7 @@ export default function Watch() {
       onMouseMove={resetControlsTimeout}
       onTouchStart={resetControlsTimeout}
     >
-      {/* Video Player */}
+      {/* Video Player - Optimized */}
       <video
         ref={videoRef}
         src={videoUrl}
@@ -263,26 +291,17 @@ export default function Watch() {
         playsInline
         autoPlay
         preload="auto"
-        crossOrigin="anonymous"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        onWaiting={() => setVideoLoading(true)}
-        onCanPlay={() => setVideoLoading(false)}
         onClick={togglePlay}
+        // Prevent context menu
+        onContextMenu={(e) => e.preventDefault()}
+        // Disable picture-in-picture to save resources
+        disablePictureInPicture
       />
-
-      {/* Loading overlay */}
-      {(videoLoading || isBuffering) && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
-            <p className="text-white/80 text-sm">Buffering...</p>
-          </div>
-        </div>
-      )}
 
       {/* Controls Overlay */}
       <AnimatePresence>
@@ -292,10 +311,10 @@ export default function Watch() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60"
+            className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 pointer-events-none"
           >
             {/* Top Bar */}
-            <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between safe-top">
+            <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between safe-top pointer-events-auto">
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -325,7 +344,7 @@ export default function Watch() {
             </div>
 
             {/* Center Controls */}
-            <div className="absolute inset-0 flex items-center justify-center gap-8">
+            <div className="absolute inset-0 flex items-center justify-center gap-8 pointer-events-auto">
               <Button
                 variant="ghost"
                 size="icon"
@@ -359,11 +378,11 @@ export default function Watch() {
             </div>
 
             {/* Bottom Bar */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 space-y-3 safe-bottom">
+            <div className="absolute bottom-0 left-0 right-0 p-4 space-y-3 safe-bottom pointer-events-auto">
               {/* Progress Bar */}
               <div className="flex items-center gap-3">
                 <span className="text-white/80 text-xs w-12 text-right">
-                  {formatTime(currentTime)}
+                  {formatTime(displayTime.current)}
                 </span>
                 <div 
                   className="flex-1 h-1 bg-white/20 rounded-full cursor-pointer relative group"
@@ -371,19 +390,19 @@ export default function Watch() {
                     const rect = e.currentTarget.getBoundingClientRect();
                     const x = e.clientX - rect.left;
                     const percent = x / rect.width;
-                    const newTime = percent * (duration || 100);
-                    handleSeek([newTime]);
+                    const newTime = percent * displayTime.duration;
+                    handleSeek(newTime);
                   }}
                 >
                   <div 
                     className="h-full bg-primary rounded-full relative"
-                    style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                    style={{ width: `${displayTime.duration ? (displayTime.current / displayTime.duration) * 100 : 0}%` }}
                   >
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
                 <span className="text-white/80 text-xs w-12">
-                  {formatTime(duration)}
+                  {formatTime(displayTime.duration)}
                 </span>
               </div>
 

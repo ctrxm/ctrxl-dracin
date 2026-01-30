@@ -121,6 +121,24 @@
 }
 
 @layer base {
+  /* Hardware Acceleration for Video - Prevent Lag */
+  video {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+    -webkit-perspective: 1000px;
+    will-change: transform;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  video:fullscreen,
+  video:-webkit-full-screen {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
   * {
     @apply border-border outline-ring/50;
   }

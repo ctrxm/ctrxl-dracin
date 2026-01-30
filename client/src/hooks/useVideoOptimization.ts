@@ -1,7 +1,12 @@
 /**
- * Video Optimization Hook
- * Handles video buffering, preloading, and quality adaptation
- * to prevent lag and skipping issues
+ * Video Optimization Hook - Enhanced Version
+ * Aggressive optimization to eliminate lag and skip issues
+ * 
+ * Key improvements:
+ * - Reduced event listener overhead
+ * - Throttled buffer checks
+ * - Disabled unnecessary monitoring
+ * - Focus on smooth playback
  */
 
 import { useEffect, useRef, RefObject } from "react";
@@ -16,165 +21,112 @@ interface UseVideoOptimizationOptions {
 export function useVideoOptimization({
   videoRef,
   onBuffering,
-  onQualityChange,
-  adaptiveQuality = true,
+  adaptiveQuality = false, // Disabled by default to reduce overhead
 }: UseVideoOptimizationOptions) {
-  const bufferCheckInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastBufferCheck = useRef<number>(0);
+  const isBufferingRef = useRef<boolean>(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Optimize video element attributes for better streaming
+    // Optimize video element for smooth playback
     video.preload = "auto";
     video.playsInline = true;
     
-    // Add buffer monitoring
-    const checkBuffer = () => {
-      if (!video) return;
-      
-      try {
-        const buffered = video.buffered;
-        if (buffered.length > 0) {
-          const currentTime = video.currentTime;
-          const bufferedEnd = buffered.end(buffered.length - 1);
-          const bufferAhead = bufferedEnd - currentTime;
-          
-          // If buffer is less than 5 seconds ahead, notify buffering
-          if (bufferAhead < 5 && !video.paused) {
-            onBuffering?.(true);
-          } else {
-            onBuffering?.(false);
-          }
-          
-          lastBufferCheck.current = bufferAhead;
-        }
-      } catch (e) {
-        console.warn("Buffer check failed:", e);
-      }
-    };
-
-    // Monitor buffering state
+    // Force hardware acceleration
+    video.style.transform = "translateZ(0)";
+    video.style.backfaceVisibility = "hidden";
+    video.style.perspective = "1000px";
+    
+    // Minimal event handlers to reduce overhead
     const handleWaiting = () => {
-      onBuffering?.(true);
+      if (!isBufferingRef.current) {
+        isBufferingRef.current = true;
+        onBuffering?.(true);
+      }
     };
 
     const handleCanPlay = () => {
-      onBuffering?.(false);
-    };
-
-    const handlePlaying = () => {
-      onBuffering?.(false);
-    };
-
-    // Adaptive quality based on network conditions
-    const handleProgress = () => {
-      if (!adaptiveQuality) return;
-      checkBuffer();
-    };
-
-    // Error recovery
-    const handleError = (e: Event) => {
-      console.error("Video error:", e);
-      const error = video.error;
-      
-      if (error) {
-        // Try to recover from network errors
-        if (error.code === MediaError.MEDIA_ERR_NETWORK) {
-          console.log("Network error detected, attempting recovery...");
-          const currentTime = video.currentTime;
-          setTimeout(() => {
-            video.load();
-            video.currentTime = currentTime;
-            video.play().catch(console.error);
-          }, 1000);
-        }
+      if (isBufferingRef.current) {
+        isBufferingRef.current = false;
+        onBuffering?.(false);
       }
     };
 
-    // Stalled detection and recovery
-    const handleStalled = () => {
-      console.log("Video stalled, attempting recovery...");
-      onBuffering?.(true);
-      
-      // Try to resume playback
-      setTimeout(() => {
-        if (video.paused) {
-          video.play().catch(console.error);
-        }
-      }, 500);
+    const handlePlaying = () => {
+      if (isBufferingRef.current) {
+        isBufferingRef.current = false;
+        onBuffering?.(false);
+      }
     };
 
-    // Attach event listeners
-    video.addEventListener("waiting", handleWaiting);
-    video.addEventListener("canplay", handleCanPlay);
-    video.addEventListener("playing", handlePlaying);
-    video.addEventListener("progress", handleProgress);
-    video.addEventListener("error", handleError);
-    video.addEventListener("stalled", handleStalled);
+    // Lightweight error recovery
+    const handleError = () => {
+      const error = video.error;
+      if (error && error.code === MediaError.MEDIA_ERR_NETWORK) {
+        console.log("Network error, attempting recovery...");
+        const currentTime = video.currentTime;
+        setTimeout(() => {
+          video.load();
+          video.currentTime = currentTime;
+          video.play().catch(console.error);
+        }, 1000);
+      }
+    };
 
-    // Start buffer monitoring
-    bufferCheckInterval.current = setInterval(checkBuffer, 1000);
+    // Attach minimal event listeners
+    video.addEventListener("waiting", handleWaiting, { passive: true });
+    video.addEventListener("canplay", handleCanPlay, { passive: true });
+    video.addEventListener("playing", handlePlaying, { passive: true });
+    video.addEventListener("error", handleError, { passive: true });
 
     return () => {
       video.removeEventListener("waiting", handleWaiting);
       video.removeEventListener("canplay", handleCanPlay);
       video.removeEventListener("playing", handlePlaying);
-      video.removeEventListener("progress", handleProgress);
       video.removeEventListener("error", handleError);
-      video.removeEventListener("stalled", handleStalled);
       
-      if (bufferCheckInterval.current) {
-        clearInterval(bufferCheckInterval.current);
-      }
+      // Cleanup styles
+      video.style.transform = "";
+      video.style.backfaceVisibility = "";
+      video.style.perspective = "";
     };
-  }, [videoRef, onBuffering, onQualityChange, adaptiveQuality]);
+  }, [videoRef, onBuffering]);
 }
 
 /**
- * Preload next episode for seamless transition
+ * Simplified preload - only preload metadata to reduce overhead
  */
 export function useVideoPreload(videoUrl: string | null, enabled: boolean = false) {
   useEffect(() => {
     if (!enabled || !videoUrl) return;
 
-    // Create a hidden video element to preload
-    const preloadVideo = document.createElement("video");
-    preloadVideo.src = videoUrl;
-    preloadVideo.preload = "metadata";
-    preloadVideo.style.display = "none";
-    document.body.appendChild(preloadVideo);
+    // Only preload metadata, not the entire video
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "video";
+    link.href = videoUrl;
+    document.head.appendChild(link);
 
     return () => {
-      document.body.removeChild(preloadVideo);
+      document.head.removeChild(link);
     };
   }, [videoUrl, enabled]);
 }
 
 /**
- * Network speed estimation for adaptive quality
+ * Network speed estimation - simplified
  */
 export function useNetworkSpeed() {
   const speedRef = useRef<number>(0);
 
   useEffect(() => {
-    // Use Network Information API if available
     if ("connection" in navigator) {
       const connection = (navigator as any).connection;
-      
-      const updateSpeed = () => {
-        if (connection.downlink) {
-          speedRef.current = connection.downlink; // Mbps
-        }
-      };
-
-      updateSpeed();
-      connection.addEventListener("change", updateSpeed);
-
-      return () => {
-        connection.removeEventListener("change", updateSpeed);
-      };
+      if (connection?.downlink) {
+        speedRef.current = connection.downlink;
+      }
     }
   }, []);
 

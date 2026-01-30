@@ -1,25 +1,23 @@
 /**
  * Service Worker for CTRXL DRACIN
- * Handles caching for static assets, API responses, and video streaming
+ * Handles caching for static assets and API responses
+ * 
+ * IMPORTANT: Video requests are NOT cached to prevent lag/skip issues
  */
 
-const CACHE_NAME = 'ctrxl-dracin-v2';
-const VIDEO_CACHE_NAME = 'ctrxl-dracin-video-v1';
-const VIDEO_CACHE_SIZE_LIMIT = 100 * 1024 * 1024; // 100MB
+const CACHE_NAME = 'ctrxl-dracin-v3';
+const STATIC_CACHE_NAME = 'ctrxl-dracin-static-v3';
 
 const urlsToCache = [
   '/',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/images/placeholder.jpg'
 ];
 
 // Install event
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches.open(STATIC_CACHE_NAME)
       .then((cache) => {
         console.log('[SW] Caching static assets');
         return cache.addAll(urlsToCache).catch((err) => {
@@ -37,7 +35,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== VIDEO_CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE_NAME) {
             console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -53,12 +51,14 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Handle video requests specially
+  // CRITICAL: Do NOT cache video requests - let them pass through directly
   if (isVideoRequest(request)) {
-    event.respondWith(handleVideoRequest(request));
+    // Pass through without any caching or intervention
+    return;
   }
+
   // Handle API requests
-  else if (isAPIRequest(url)) {
+  if (isAPIRequest(url)) {
     event.respondWith(handleAPIRequest(request));
   }
   // Handle static assets
@@ -71,9 +71,11 @@ function isVideoRequest(request) {
   const url = new URL(request.url);
   return (
     request.destination === 'video' ||
-    url.pathname.match(/\.(mp4|webm|m3u8|ts)$/i) ||
+    url.pathname.match(/\.(mp4|webm|m3u8|ts|m4s)$/i) ||
     url.hostname.includes('video') ||
-    url.hostname.includes('cdn')
+    url.hostname.includes('cdn') ||
+    url.search.includes('video') ||
+    request.headers.get('range') !== null // Range requests are for video seeking
   );
 }
 
@@ -81,102 +83,14 @@ function isAPIRequest(url) {
   return url.hostname.includes('api.sansekai.my.id') || url.pathname.includes('/api/');
 }
 
-async function handleVideoRequest(request) {
-  const cache = await caches.open(VIDEO_CACHE_NAME);
-  
-  // Handle range requests (video seeking)
-  if (request.headers.has('range')) {
-    return handleRangeRequest(request, cache);
-  }
-
-  // Try cache first
-  const cachedResponse = await cache.match(request);
-  
-  // Fetch from network
-  const networkPromise = fetch(request)
-    .then(async (response) => {
-      if (response.ok && response.status === 200) {
-        // Cache video segments
-        const responseToCache = response.clone();
-        await manageCacheSize(cache);
-        cache.put(request, responseToCache).catch((err) => {
-          console.warn('[SW] Failed to cache video:', err);
-        });
-      }
-      return response;
-    })
-    .catch((error) => {
-      console.error('[SW] Video fetch failed:', error);
-      return cachedResponse || new Response('Network error', { status: 503 });
-    });
-
-  // Return cached if available, otherwise wait for network
-  return cachedResponse || networkPromise;
-}
-
-async function handleRangeRequest(request, cache) {
-  try {
-    // Try to get full video from cache
-    const cachedResponse = await cache.match(request.url);
-    
-    if (cachedResponse) {
-      return serveRangeFromCache(request, cachedResponse);
-    }
-
-    // Fetch from network
-    const response = await fetch(request);
-    
-    // Cache full video responses
-    if (response.ok && response.status === 200) {
-      const responseToCache = response.clone();
-      await manageCacheSize(cache);
-      cache.put(request.url, responseToCache).catch(console.error);
-    }
-    
-    return response;
-  } catch (error) {
-    console.error('[SW] Range request failed:', error);
-    return new Response('Range request failed', { status: 503 });
-  }
-}
-
-async function serveRangeFromCache(request, cachedResponse) {
-  const rangeHeader = request.headers.get('range');
-  if (!rangeHeader) {
-    return cachedResponse;
-  }
-
-  const videoBlob = await cachedResponse.blob();
-  const videoSize = videoBlob.size;
-
-  // Parse range header
-  const rangeMatch = rangeHeader.match(/bytes=(\d+)-(\d*)/);
-  if (!rangeMatch) {
-    return cachedResponse;
-  }
-
-  const start = parseInt(rangeMatch[1], 10);
-  const end = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : videoSize - 1;
-
-  // Create range response
-  const rangeBlob = videoBlob.slice(start, end + 1);
-  return new Response(rangeBlob, {
-    status: 206,
-    statusText: 'Partial Content',
-    headers: {
-      'Content-Type': cachedResponse.headers.get('Content-Type') || 'video/mp4',
-      'Content-Length': rangeBlob.size.toString(),
-      'Content-Range': `bytes ${start}-${end}/${videoSize}`,
-      'Accept-Ranges': 'bytes',
-      'Cache-Control': 'public, max-age=31536000',
-    },
-  });
-}
-
 async function handleAPIRequest(request) {
   try {
-    // Network first for API
-    const response = await fetch(request);
+    // Network first for API - with short timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(request, { signal: controller.signal });
+    clearTimeout(timeoutId);
     
     if (response.ok) {
       const cache = await caches.open(CACHE_NAME);
@@ -209,10 +123,10 @@ async function handleStaticRequest(request) {
     const response = await fetch(request);
     
     if (response.ok && response.status === 200) {
-      const cache = await caches.open(CACHE_NAME);
+      const cache = await caches.open(STATIC_CACHE_NAME);
       
-      // Cache images and static assets
-      if (request.url.match(/\.(jpg|jpeg|png|gif|webp|svg|css|js|woff|woff2|ttf)$/i)) {
+      // Only cache specific static assets
+      if (request.url.match(/\.(jpg|jpeg|png|gif|webp|svg|css|js|woff|woff2|ttf|ico)$/i)) {
         cache.put(request, response.clone()).catch(console.error);
       }
     }
@@ -227,47 +141,13 @@ async function handleStaticRequest(request) {
   }
 }
 
-async function manageCacheSize(cache) {
-  const requests = await cache.keys();
-  let totalSize = 0;
-  const entries = [];
-
-  // Calculate total size
-  for (const request of requests) {
-    const response = await cache.match(request);
-    if (response) {
-      const blob = await response.blob();
-      const size = blob.size;
-      totalSize += size;
-      entries.push({ request, size, url: request.url });
-    }
-  }
-
-  // Remove oldest entries if over limit
-  if (totalSize > VIDEO_CACHE_SIZE_LIMIT) {
-    console.log('[SW] Cache size exceeded, cleaning up...');
-    
-    // Remove entries until under 80% of limit
-    const targetSize = VIDEO_CACHE_SIZE_LIMIT * 0.8;
-    let currentSize = totalSize;
-    
-    for (const entry of entries) {
-      if (currentSize <= targetSize) break;
-      
-      await cache.delete(entry.request);
-      currentSize -= entry.size;
-      console.log('[SW] Removed:', entry.url);
-    }
-  }
-}
-
 // Message handler
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CLEAR_CACHE') {
     event.waitUntil(
       Promise.all([
         caches.delete(CACHE_NAME),
-        caches.delete(VIDEO_CACHE_NAME)
+        caches.delete(STATIC_CACHE_NAME)
       ]).then(() => {
         console.log('[SW] All caches cleared');
         if (event.ports[0]) {
@@ -275,5 +155,9 @@ self.addEventListener('message', (event) => {
         }
       })
     );
+  }
+  
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
