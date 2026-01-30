@@ -1,6 +1,6 @@
 /**
- * Watch Page - Pure Cinema Mode (Optimized)
- * Design: Neo-Noir Cinema
+ * Watch Page - Premium Streaming Experience
+ * Design: Modern, Clean, Netflix-inspired
  * 
  * OPTIMIZATIONS:
  * - Minimal re-renders using refs and memo
@@ -258,20 +258,25 @@ export default function Watch() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      <div className="fixed inset-0 bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+          <p className="text-muted-foreground">Memuat video...</p>
+        </div>
       </div>
     );
   }
 
   if (error || !drama || !videoUrl) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="text-center text-white">
-          <div className="text-6xl mb-4">🎬</div>
-          <h2 className="text-xl font-bold mb-2">Video tidak tersedia</h2>
-          <p className="text-white/60 mb-4">{error || "Silakan coba episode lain"}</p>
-          <Button onClick={() => window.history.back()}>Kembali</Button>
+      <div className="fixed inset-0 bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-secondary flex items-center justify-center">
+            <Play className="w-12 h-12 text-muted-foreground" />
+          </div>
+          <h2 className="text-xl font-display text-foreground mb-2">Video tidak tersedia</h2>
+          <p className="text-muted-foreground mb-6">{error || "Silakan coba episode lain"}</p>
+          <Button onClick={() => window.history.back()} className="glow-primary">Kembali</Button>
         </div>
       </div>
     );
@@ -477,7 +482,7 @@ export default function Watch() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 w-80 max-w-full bg-card z-50 overflow-hidden"
+              className="fixed top-0 right-0 bottom-0 w-80 max-w-full bg-card/95 backdrop-blur-xl z-50 overflow-hidden border-l border-border"
             >
               <div className="p-4 border-b border-border flex items-center justify-between">
                 <h2 className="font-display text-xl text-foreground">Daftar Episode</h2>
@@ -495,10 +500,8 @@ export default function Watch() {
                     <button
                       key={ep.chapterId}
                       onClick={() => goToEpisode(ep.chapterIndex)}
-                      className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-all ${
-                        ep.chapterIndex === episodeIndex
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      className={`episode-btn aspect-square text-sm ${
+                        ep.chapterIndex === episodeIndex ? "active" : ""
                       }`}
                     >
                       {ep.chapterIndex + 1}

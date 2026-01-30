@@ -1,12 +1,6 @@
 /**
- * Drama Detail Page - Movie Poster Feel
- * Design: Neo-Noir Cinema
- * 
- * Features:
- * - Full poster background with glass overlay
- * - Smooth scroll reveal
- * - Lazy loaded episode list
- * - Sticky CTA on mobile
+ * Drama Detail Page - Premium Streaming Experience
+ * Design: Modern, Clean, Netflix-inspired
  */
 
 import { useState, useEffect } from "react";
@@ -14,7 +8,7 @@ import { useParams, Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, Bookmark, BookmarkCheck, Share2, ChevronDown, ChevronUp, 
-  Clock, Film, Star, ArrowLeft, Lock
+  Film, Star, ArrowLeft, Lock, Clock, Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -81,7 +75,7 @@ export default function DramaDetail() {
     }
   };
 
-  const displayedEpisodes = episodesExpanded ? episodes : episodes.slice(0, 12);
+  const displayedEpisodes = episodesExpanded ? episodes : episodes.slice(0, 20);
 
   if (loading) {
     return <DetailSkeleton />;
@@ -90,11 +84,18 @@ export default function DramaDetail() {
   if (!drama) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🎬</div>
-          <h2 className="text-xl font-bold mb-2">Drama tidak ditemukan</h2>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-secondary flex items-center justify-center">
+            <Film className="w-12 h-12 text-muted-foreground" />
+          </div>
+          <h2 className="text-xl font-display mb-2">Drama tidak ditemukan</h2>
+          <p className="text-muted-foreground mb-6">Drama yang kamu cari tidak tersedia</p>
           <Button onClick={() => setLocation("/")}>Kembali ke Beranda</Button>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -112,8 +113,8 @@ export default function DramaDetail() {
           }`}
           onLoad={() => setImageLoaded(true)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/95 to-background/60" />
-        <div className="absolute inset-0 backdrop-blur-xl" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/95 to-background/70" />
+        <div className="absolute inset-0 backdrop-blur-2xl" />
       </div>
 
       {/* Header */}
@@ -122,7 +123,7 @@ export default function DramaDetail() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-foreground hover:bg-white/10"
+            className="w-10 h-10 rounded-full bg-secondary/50 backdrop-blur-sm hover:bg-secondary"
             onClick={() => window.history.back()}
           >
             <ArrowLeft className="w-5 h-5" />
@@ -131,7 +132,7 @@ export default function DramaDetail() {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-foreground hover:bg-white/10"
+              className="w-10 h-10 rounded-full bg-secondary/50 backdrop-blur-sm hover:bg-secondary"
               onClick={handleShare}
             >
               <Share2 className="w-5 h-5" />
@@ -139,7 +140,7 @@ export default function DramaDetail() {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-foreground hover:bg-white/10"
+              className="w-10 h-10 rounded-full bg-secondary/50 backdrop-blur-sm hover:bg-secondary"
               onClick={handleBookmark}
             >
               {isBookmarked(drama.bookId) ? (
@@ -155,20 +156,29 @@ export default function DramaDetail() {
       {/* Content */}
       <main className="container">
         {/* Poster and Info */}
-        <div className="flex flex-col md:flex-row gap-6 md:gap-10 pt-4">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 pt-4">
           {/* Poster */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex-shrink-0 mx-auto md:mx-0"
           >
-            <div className="relative w-40 md:w-56 aspect-[2/3] rounded-xl overflow-hidden shadow-2xl">
+            <div className="relative w-44 md:w-60 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl">
               <img
                 src={getCoverUrl(drama)}
                 alt={drama.bookName}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 ring-1 ring-white/10 rounded-xl" />
+              <div className="absolute inset-0 ring-1 ring-white/10 rounded-2xl" />
+              
+              {/* Play overlay on hover */}
+              <Link href={`/watch/${drama.bookId}/${lastWatched || 0}`}>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+                  <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center glow-primary">
+                    <Play className="w-8 h-8 text-white fill-white ml-1" />
+                  </div>
+                </div>
+              </Link>
             </div>
           </motion.div>
 
@@ -179,22 +189,28 @@ export default function DramaDetail() {
             transition={{ delay: 0.1 }}
             className="flex-1 text-center md:text-left"
           >
-            <h1 className="font-display text-3xl md:text-5xl text-foreground mb-4">
+            <h1 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground mb-4">
               {drama.bookName}
             </h1>
 
             {/* Meta */}
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-muted-foreground mb-4">
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-muted-foreground mb-5">
               {drama.chapterCount && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50">
                   <Film className="w-4 h-4" />
                   {drama.chapterCount} Episode
                 </div>
               )}
               {drama.rankVo && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-amber-500" />
-                  {drama.rankVo.hotCode} views
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-400">
+                  <Star className="w-4 h-4 fill-current" />
+                  {drama.rankVo.hotCode}
+                </div>
+              )}
+              {drama.playCount && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50">
+                  <Users className="w-4 h-4" />
+                  {drama.playCount}
                 </div>
               )}
             </div>
@@ -205,7 +221,7 @@ export default function DramaDetail() {
                 {drama.tags.map((tag) => (
                   <span 
                     key={tag}
-                    className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs"
+                    className="px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs font-medium"
                   >
                     {tag}
                   </span>
@@ -214,18 +230,36 @@ export default function DramaDetail() {
             )}
 
             {/* Description */}
-            <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-6">
+            <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-8 max-w-2xl">
               {drama.introduction}
             </p>
 
             {/* Desktop Actions */}
             <div className="hidden md:flex gap-3">
               <Link href={`/watch/${drama.bookId}/${lastWatched || 0}`}>
-                <Button size="lg" className="bg-primary hover:bg-primary/90 gap-2 glow-crimson">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 gap-2 glow-primary px-8">
                   <Play className="w-5 h-5 fill-current" />
                   {lastWatched > 0 ? "Lanjutkan" : "Tonton Sekarang"}
                 </Button>
               </Link>
+              <Button 
+                size="lg" 
+                variant="secondary"
+                className="gap-2"
+                onClick={handleBookmark}
+              >
+                {isBookmarked(drama.bookId) ? (
+                  <>
+                    <BookmarkCheck className="w-5 h-5 text-primary" />
+                    Tersimpan
+                  </>
+                ) : (
+                  <>
+                    <Bookmark className="w-5 h-5" />
+                    Simpan
+                  </>
+                )}
+              </Button>
             </div>
           </motion.div>
         </div>
@@ -235,19 +269,20 @@ export default function DramaDetail() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mt-10"
+          className="mt-12"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-2xl text-foreground">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-display text-2xl text-foreground flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary" />
               Daftar Episode
             </h2>
-            <span className="text-sm text-muted-foreground">
+            <span className="px-3 py-1 rounded-full bg-secondary text-sm text-muted-foreground">
               {episodes.length} Episode
             </span>
           </div>
 
           {/* Episode Grid */}
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
             <AnimatePresence>
               {displayedEpisodes.map((episode, index) => (
                 <motion.div
@@ -255,18 +290,14 @@ export default function DramaDetail() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.02 }}
+                  transition={{ delay: index * 0.01 }}
                 >
                   <Link href={`/watch/${drama.bookId}/${episode.chapterIndex}`}>
                     <motion.button
-                      whileHover={{ scale: 1.05 }}
+                      whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`relative w-full aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition-all ${
-                        episode.chapterIndex === lastWatched
-                          ? "bg-primary text-primary-foreground glow-crimson"
-                          : episode.isCharge === 1
-                          ? "bg-secondary/50 text-muted-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      className={`episode-btn w-full aspect-square text-sm ${
+                        episode.chapterIndex === lastWatched ? "active" : ""
                       }`}
                     >
                       {episode.chapterIndex + 1}
@@ -281,20 +312,20 @@ export default function DramaDetail() {
           </div>
 
           {/* Show More */}
-          {episodes.length > 12 && (
+          {episodes.length > 20 && (
             <Button
               variant="ghost"
-              className="w-full mt-4 text-muted-foreground hover:text-foreground"
+              className="w-full mt-6 text-muted-foreground hover:text-foreground gap-2"
               onClick={() => setEpisodesExpanded(!episodesExpanded)}
             >
               {episodesExpanded ? (
                 <>
-                  <ChevronUp className="w-4 h-4 mr-2" />
+                  <ChevronUp className="w-4 h-4" />
                   Tampilkan Lebih Sedikit
                 </>
               ) : (
                 <>
-                  <ChevronDown className="w-4 h-4 mr-2" />
+                  <ChevronDown className="w-4 h-4" />
                   Tampilkan Semua ({episodes.length} Episode)
                 </>
               )}
@@ -304,10 +335,10 @@ export default function DramaDetail() {
       </main>
 
       {/* Mobile Sticky CTA */}
-      <div className="fixed bottom-16 left-0 right-0 p-4 md:hidden safe-bottom z-40">
+      <div className="fixed bottom-20 left-0 right-0 p-4 md:hidden safe-bottom z-40">
         <div className="glass-card rounded-2xl p-3">
           <Link href={`/watch/${drama.bookId}/${lastWatched || 0}`}>
-            <Button className="w-full bg-primary hover:bg-primary/90 gap-2 h-14 text-lg glow-crimson">
+            <Button className="w-full bg-primary hover:bg-primary/90 gap-2 h-14 text-lg glow-primary rounded-xl">
               <Play className="w-6 h-6 fill-current" />
               {lastWatched > 0 ? `Lanjutkan EP ${lastWatched + 1}` : "Tonton Sekarang"}
             </Button>
@@ -326,28 +357,31 @@ function DetailSkeleton() {
         <div className="w-10 h-10 rounded-full skeleton" />
       </header>
       <main className="container">
-        <div className="flex flex-col md:flex-row gap-6 md:gap-10 pt-4">
-          <div className="w-40 md:w-56 aspect-[2/3] rounded-xl skeleton mx-auto md:mx-0" />
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12 pt-4">
+          <div className="w-44 md:w-60 aspect-[2/3] rounded-2xl skeleton mx-auto md:mx-0" />
           <div className="flex-1 space-y-4">
-            <div className="h-10 w-3/4 skeleton rounded mx-auto md:mx-0" />
-            <div className="h-4 w-1/2 skeleton rounded mx-auto md:mx-0" />
+            <div className="h-12 w-3/4 skeleton rounded-xl mx-auto md:mx-0" />
             <div className="flex gap-2 justify-center md:justify-start">
+              <div className="h-8 w-24 skeleton rounded-full" />
+              <div className="h-8 w-20 skeleton rounded-full" />
+            </div>
+            <div className="flex gap-2 justify-center md:justify-start flex-wrap">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-6 w-16 skeleton rounded-full" />
+                <div key={i} className="h-7 w-20 skeleton rounded-full" />
               ))}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 max-w-2xl">
               <div className="h-4 w-full skeleton rounded" />
               <div className="h-4 w-full skeleton rounded" />
               <div className="h-4 w-2/3 skeleton rounded" />
             </div>
           </div>
         </div>
-        <div className="mt-10">
-          <div className="h-8 w-40 skeleton rounded mb-4" />
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="aspect-square skeleton rounded-lg" />
+        <div className="mt-12">
+          <div className="h-8 w-48 skeleton rounded-xl mb-6" />
+          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={i} className="aspect-square skeleton rounded-xl" />
             ))}
           </div>
         </div>

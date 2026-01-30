@@ -1,13 +1,11 @@
 /**
  * Drama Card Component
- * Design: Neo-Noir Cinema
- * 
- * Cinematic card with spotlight hover effect and film grain texture
+ * Design: Premium Streaming Experience
  */
 
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { Play, Star } from "lucide-react";
+import { Play, Star, TrendingUp } from "lucide-react";
 import type { Drama } from "@/lib/api";
 import { getCoverUrl } from "@/lib/api";
 import { useState, useRef } from "react";
@@ -35,25 +33,23 @@ export default function DramaCard({ drama, index = 0, size = "md", showRank = fa
   };
 
   const sizeClasses = {
-    sm: "w-28 aspect-[2/3]",
-    md: "w-36 aspect-[2/3]",
-    lg: "w-44 aspect-[2/3]",
+    sm: "w-32 aspect-[2/3]",
+    md: "w-40 aspect-[2/3]",
+    lg: "w-48 aspect-[2/3]",
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.05 }}
+      transition={{ duration: 0.4, delay: index * 0.05 }}
     >
       <Link href={`/drama/${drama.bookId}`}>
         <motion.div
           ref={cardRef}
-          className={`relative ${sizeClasses[size]} rounded-lg overflow-hidden cursor-pointer group`}
+          className={`relative ${sizeClasses[size]} rounded-2xl overflow-hidden cursor-pointer group card-hover`}
           onMouseMove={handleMouseMove}
-          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.3 }}
           style={{
             "--mouse-x": `${mousePosition.x}%`,
             "--mouse-y": `${mousePosition.y}%`,
@@ -70,7 +66,7 @@ export default function DramaCard({ drama, index = 0, size = "md", showRank = fa
             alt={drama.bookName}
             className={`w-full h-full object-cover transition-all duration-500 ${
               imageLoaded ? "opacity-100" : "opacity-0"
-            } group-hover:scale-105`}
+            } group-hover:scale-110`}
             loading="lazy"
             onLoad={() => setImageLoaded(true)}
             onError={(e) => {
@@ -83,25 +79,27 @@ export default function DramaCard({ drama, index = 0, size = "md", showRank = fa
           <div 
             className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
             style={{
-              background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, oklch(1 0 0 / 0.15) 0%, transparent 50%)`,
+              background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, oklch(1 0 0 / 0.2) 0%, transparent 50%)`,
             }}
           />
           
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
           
           {/* Rank badge */}
           {showRank && drama.rankVo && (
-            <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded bg-primary/90 text-primary-foreground text-xs font-bold">
-              <Star className="w-3 h-3 fill-current" />
-              {drama.rankVo.hotCode}
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/90 backdrop-blur-sm">
+              <TrendingUp className="w-3.5 h-3.5 text-white" />
+              <span className="text-white text-xs font-bold">
+                #{drama.rankVo.sort || 1}
+              </span>
             </div>
           )}
           
           {/* Corner badge */}
           {drama.corner && (
             <div 
-              className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold text-white"
+              className="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white backdrop-blur-sm"
               style={{ backgroundColor: drama.corner.color }}
             >
               {drama.corner.name}
@@ -109,35 +107,51 @@ export default function DramaCard({ drama, index = 0, size = "md", showRank = fa
           )}
           
           {/* Episode count */}
-          {drama.chapterCount && (
-            <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 text-white text-[10px]">
+          {drama.chapterCount && !drama.corner && (
+            <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
               {drama.chapterCount} EP
             </div>
           )}
           
           {/* Play button on hover */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
             <motion.div
-              initial={{ scale: 0 }}
+              initial={{ scale: 0.8, opacity: 0 }}
               whileHover={{ scale: 1.1 }}
-              animate={{ scale: 1 }}
-              className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center glow-crimson"
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center glow-primary"
             >
-              <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+              <Play className="w-7 h-7 text-white fill-white ml-1" />
             </motion.div>
           </div>
           
-          {/* Title */}
-          <div className="absolute bottom-0 left-0 right-0 p-3">
-            <h3 className="text-white text-sm font-medium line-clamp-2 text-shadow-cinematic">
+          {/* Content */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            {/* Rating */}
+            {drama.rankVo?.hotCode && (
+              <div className="flex items-center gap-1 mb-2">
+                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <span className="text-amber-400 text-xs font-semibold">
+                  {drama.rankVo.hotCode}
+                </span>
+              </div>
+            )}
+            
+            {/* Title */}
+            <h3 className="text-white text-sm font-semibold line-clamp-2 mb-1.5 group-hover:text-primary transition-colors">
               {drama.bookName}
             </h3>
+            
+            {/* Tags */}
             {drama.tags && drama.tags.length > 0 && (
-              <p className="text-white/60 text-[10px] mt-1 line-clamp-1">
+              <p className="text-white/60 text-[11px] line-clamp-1">
                 {drama.tags.slice(0, 2).join(" • ")}
               </p>
             )}
           </div>
+          
+          {/* Border glow on hover */}
+          <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 group-hover:ring-primary/50 transition-all duration-300" />
         </motion.div>
       </Link>
     </motion.div>
@@ -147,13 +161,13 @@ export default function DramaCard({ drama, index = 0, size = "md", showRank = fa
 // Skeleton version for loading states
 export function DramaCardSkeleton({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const sizeClasses = {
-    sm: "w-28 aspect-[2/3]",
-    md: "w-36 aspect-[2/3]",
-    lg: "w-44 aspect-[2/3]",
+    sm: "w-32 aspect-[2/3]",
+    md: "w-40 aspect-[2/3]",
+    lg: "w-48 aspect-[2/3]",
   };
 
   return (
-    <div className={`${sizeClasses[size]} rounded-lg overflow-hidden`}>
+    <div className={`${sizeClasses[size]} rounded-2xl overflow-hidden`}>
       <div className="w-full h-full skeleton" />
     </div>
   );

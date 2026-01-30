@@ -1,17 +1,12 @@
 /**
- * Bookmarks Page
- * Design: Neo-Noir Cinema
- * 
- * Features:
- * - Saved dramas list
- * - Continue watching section
- * - Watch history
+ * Bookmarks Page - Premium Streaming Experience
+ * Design: Modern, Clean, Netflix-inspired
  */
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
-import { Bookmark, Clock, Play, Trash2, X } from "lucide-react";
+import { Bookmark, Clock, Play, Trash2, X, Heart, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBookmarks, useWatchHistory } from "@/hooks/useLocalStorage";
@@ -36,25 +31,28 @@ export default function Bookmarks() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border safe-top">
-        <div className="container py-4">
-          <h1 className="font-display text-2xl text-foreground">Koleksi Saya</h1>
+      <header className="sticky top-0 z-40 glass-nav safe-top">
+        <div className="container py-5">
+          <h1 className="font-display text-2xl text-foreground flex items-center gap-2">
+            <Heart className="w-6 h-6 text-primary" />
+            Koleksi Saya
+          </h1>
         </div>
       </header>
 
       <main className="container py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full bg-secondary rounded-xl p-1 mb-6">
+          <TabsList className="w-full bg-secondary/50 rounded-2xl p-1.5 mb-8">
             <TabsTrigger 
               value="bookmarks" 
-              className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="flex-1 rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium transition-all"
             >
               <Bookmark className="w-4 h-4 mr-2" />
               Simpan ({bookmarks.length})
             </TabsTrigger>
             <TabsTrigger 
               value="history"
-              className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="flex-1 rounded-xl py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium transition-all"
             >
               <Clock className="w-4 h-4 mr-2" />
               Riwayat ({history.length})
@@ -65,9 +63,9 @@ export default function Bookmarks() {
           <TabsContent value="bookmarks">
             {bookmarks.length === 0 ? (
               <EmptyState
-                icon={<Bookmark className="w-16 h-16 text-muted-foreground" />}
+                icon={<Bookmark className="w-12 h-12 text-muted-foreground" />}
                 title="Belum ada drama tersimpan"
-                description="Drama yang kamu simpan akan muncul di sini"
+                description="Drama yang kamu simpan akan muncul di sini. Mulai jelajahi dan simpan drama favoritmu!"
               />
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -82,26 +80,29 @@ export default function Bookmarks() {
                       className="relative group"
                     >
                       <Link href={`/drama/${drama.bookId}`}>
-                        <div className="relative aspect-[2/3] rounded-lg overflow-hidden">
+                        <div className="relative aspect-[2/3] rounded-2xl overflow-hidden card-hover">
                           <img
                             src={drama.coverWap}
                             alt={drama.bookName}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                           
                           {/* Play overlay */}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center glow-crimson">
-                              <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                            <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center glow-primary">
+                              <Play className="w-7 h-7 text-white fill-white ml-1" />
                             </div>
                           </div>
                           
-                          <div className="absolute bottom-0 left-0 right-0 p-3">
-                            <h3 className="text-white text-sm font-medium line-clamp-2">
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <h3 className="text-white font-semibold line-clamp-2 text-sm">
                               {drama.bookName}
                             </h3>
                           </div>
+                          
+                          {/* Border */}
+                          <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 group-hover:ring-primary/50 transition-all" />
                         </div>
                       </Link>
                       
@@ -109,7 +110,7 @@ export default function Bookmarks() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute top-2 right-2 w-8 h-8 bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                        className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500"
                         onClick={(e) => {
                           e.preventDefault();
                           handleRemoveBookmark(drama.bookId, drama.bookName);
@@ -128,29 +129,30 @@ export default function Bookmarks() {
           <TabsContent value="history">
             {history.length === 0 ? (
               <EmptyState
-                icon={<Clock className="w-16 h-16 text-muted-foreground" />}
+                icon={<Clock className="w-12 h-12 text-muted-foreground" />}
                 title="Belum ada riwayat"
-                description="Drama yang kamu tonton akan muncul di sini"
+                description="Drama yang kamu tonton akan muncul di sini. Mulai menonton drama favoritmu!"
               />
             ) : (
               <>
                 {/* Clear history button */}
-                <div className="flex justify-end mb-4">
+                <div className="flex justify-end mb-6">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground hover:text-destructive gap-2"
                     onClick={handleClearHistory}
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
+                    <Trash2 className="w-4 h-4" />
                     Hapus Riwayat
                   </Button>
                 </div>
 
                 {/* Continue Watching */}
                 {continueWatching.length > 0 && (
-                  <section className="mb-8">
-                    <h2 className="font-display text-lg text-foreground mb-4">
+                  <section className="mb-10">
+                    <h2 className="font-display text-lg text-foreground mb-4 flex items-center gap-2">
+                      <Play className="w-5 h-5 text-primary" />
                       Lanjutkan Menonton
                     </h2>
                     <div className="space-y-3">
@@ -162,12 +164,12 @@ export default function Bookmarks() {
                           transition={{ delay: index * 0.05 }}
                         >
                           <Link href={`/watch/${item.bookId}/${item.episodeIndex}`}>
-                            <div className="flex gap-4 p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors group">
-                              <div className="relative w-24 aspect-video rounded-lg overflow-hidden flex-shrink-0">
+                            <div className="flex gap-4 p-4 rounded-2xl bg-secondary/50 hover:bg-secondary transition-all group">
+                              <div className="relative w-28 aspect-video rounded-xl overflow-hidden flex-shrink-0">
                                 <img
                                   src={item.coverWap}
                                   alt={item.bookName}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
                                 {/* Progress bar */}
                                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
@@ -177,20 +179,28 @@ export default function Bookmarks() {
                                   />
                                 </div>
                                 {/* Play icon */}
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Play className="w-6 h-6 text-white fill-white" />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Play className="w-8 h-8 text-white fill-white" />
                                 </div>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-foreground font-medium line-clamp-1">
+                              <div className="flex-1 min-w-0 py-1">
+                                <h3 className="text-foreground font-semibold line-clamp-1 mb-1">
                                   {item.bookName}
                                 </h3>
-                                <p className="text-muted-foreground text-sm">
+                                <p className="text-muted-foreground text-sm mb-2">
                                   {item.episodeName}
                                 </p>
-                                <p className="text-muted-foreground text-xs mt-1">
-                                  {item.progress}% selesai
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-primary rounded-full"
+                                      style={{ width: `${item.progress}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-muted-foreground">
+                                    {item.progress}%
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </Link>
@@ -202,7 +212,8 @@ export default function Bookmarks() {
 
                 {/* Full History */}
                 <section>
-                  <h2 className="font-display text-lg text-foreground mb-4">
+                  <h2 className="font-display text-lg text-foreground mb-4 flex items-center gap-2">
+                    <Film className="w-5 h-5 text-muted-foreground" />
                     Riwayat Lengkap
                   </h2>
                   <div className="space-y-2">
@@ -214,8 +225,8 @@ export default function Bookmarks() {
                         transition={{ delay: index * 0.02 }}
                       >
                         <Link href={`/watch/${item.bookId}/${item.episodeIndex}`}>
-                          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors">
-                            <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                          <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-secondary/50 transition-colors group">
+                            <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
                               <img
                                 src={item.coverWap}
                                 alt={item.bookName}
@@ -230,7 +241,7 @@ export default function Bookmarks() {
                                 {item.episodeName} • {new Date(item.watchedAt).toLocaleDateString("id-ID")}
                               </p>
                             </div>
-                            <Play className="w-4 h-4 text-muted-foreground" />
+                            <Play className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
                         </Link>
                       </motion.div>
@@ -257,13 +268,18 @@ function EmptyState({ icon, title, description }: EmptyStateProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center py-16 text-center"
+      className="flex flex-col items-center justify-center py-20 text-center"
     >
-      <div className="mb-4 opacity-50">{icon}</div>
-      <h2 className="text-xl font-bold text-foreground mb-2">{title}</h2>
-      <p className="text-muted-foreground mb-6">{description}</p>
+      <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center mb-6">
+        {icon}
+      </div>
+      <h2 className="text-xl font-display text-foreground mb-2">{title}</h2>
+      <p className="text-muted-foreground mb-8 max-w-sm">{description}</p>
       <Link href="/">
-        <Button>Jelajahi Drama</Button>
+        <Button className="gap-2 glow-primary">
+          <Play className="w-4 h-4" />
+          Jelajahi Drama
+        </Button>
       </Link>
     </motion.div>
   );

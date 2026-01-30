@@ -1,32 +1,18 @@
 /**
- * Home Page - Cinematic Landing
- * Design: Neo-Noir Cinema
- * 
- * Features:
- * - Multi-source tabs (DramaBox, ReelShort, NetShort, Melolo, FlickReels, FreeReels)
- * - Fullscreen hero banner with Ken Burns effect
- * - Auto-rotating featured drama
- * - Trending, Latest, For You sections per source
- * - Skeleton loaders everywhere
+ * Home Page - Premium Streaming Experience
+ * Design: Modern, Clean, Netflix-inspired
  */
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
-import { Play, ChevronRight, Bookmark, BookmarkCheck, Info } from "lucide-react";
+import { Play, ChevronRight, Bookmark, BookmarkCheck, Info, Star, TrendingUp, Clock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DramaCard, { DramaCardSkeleton } from "@/components/DramaCard";
 import SourceTabs from "@/components/SourceTabs";
-import { getTrending, getLatest, getForYou, getCoverUrl, isEndpointAvailable, type Drama, type SourceType } from "@/lib/api";
+import { getTrending, getLatest, getForYou, getCoverUrl, type Drama, type SourceType } from "@/lib/api";
 import { useBookmarks, useWatchHistory } from "@/hooks/useLocalStorage";
 import { toast } from "sonner";
-
-// Hero backgrounds for rotation
-const heroBackgrounds = [
-  "/images/hero-bg-1.jpg",
-  "/images/hero-bg-2.jpg",
-  "/images/hero-bg-3.jpg",
-];
 
 export default function Home() {
   const [activeSource, setActiveSource] = useState<SourceType>('dramabox');
@@ -36,13 +22,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [heroIndex, setHeroIndex] = useState(0);
-  const [heroImageIndex, setHeroImageIndex] = useState(0);
   
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { getContinueWatching } = useWatchHistory();
   const continueWatching = getContinueWatching();
 
-  // Fetch data when source changes
   useEffect(() => {
     async function fetchData() {
       try {
@@ -66,13 +50,11 @@ export default function Home() {
     fetchData();
   }, [activeSource]);
 
-  // Auto-rotate hero
   useEffect(() => {
     if (trending.length === 0) return;
     const interval = setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % Math.min(trending.length, 5));
-      setHeroImageIndex((prev) => (prev + 1) % heroBackgrounds.length);
-    }, 8000);
+    }, 6000);
     return () => clearInterval(interval);
   }, [trending.length]);
 
@@ -97,12 +79,20 @@ export default function Home() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🎬</div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Oops!</h2>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>Coba Lagi</Button>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
+        >
+          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+            <Play className="w-12 h-12 text-primary" />
+          </div>
+          <h2 className="text-2xl font-display text-foreground mb-3">Oops! Terjadi Kesalahan</h2>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <Button onClick={() => window.location.reload()} className="glow-primary">
+            Coba Lagi
+          </Button>
+        </motion.div>
       </div>
     );
   }
@@ -110,65 +100,86 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-24">
       {/* Hero Section */}
-      <section className="relative h-[85vh] min-h-[600px] overflow-hidden">
-        {/* Background Image with Ken Burns */}
+      <section className="relative h-[75vh] min-h-[500px] max-h-[700px] overflow-hidden">
+        {/* Background with gradient mesh */}
+        <div className="absolute inset-0 gradient-mesh" />
+        
+        {/* Featured Drama Background */}
         <AnimatePresence mode="wait">
-          <motion.div
-            key={heroImageIndex}
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5 }}
-            className="absolute inset-0"
-          >
-            <div 
-              className="absolute inset-0 bg-cover bg-center animate-ken-burns"
-              style={{ backgroundImage: `url(${heroBackgrounds[heroImageIndex]})` }}
-            />
-          </motion.div>
+          {featuredDrama && (
+            <motion.div
+              key={featuredDrama.bookId}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1 }}
+              className="absolute inset-0"
+            >
+              <div 
+                className="absolute inset-0 bg-cover bg-center animate-ken-burns"
+                style={{ backgroundImage: `url(${getCoverUrl(featuredDrama)})` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
+            </motion.div>
+          )}
         </AnimatePresence>
         
-        {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
-        
-        {/* Content */}
-        <div className="relative h-full container flex flex-col justify-end pb-16 md:pb-24">
+        {/* Hero Content */}
+        <div className="relative h-full container flex flex-col justify-end pb-12 md:pb-16">
           <AnimatePresence mode="wait">
             {featuredDrama && (
               <motion.div
                 key={featuredDrama.bookId}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -30 }}
-                transition={{ duration: 0.6 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
                 className="max-w-2xl"
               >
-                {/* Badge */}
+                {/* Trending Badge */}
                 {featuredDrama.rankVo && (
                   <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-primary text-sm mb-4"
+                    className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/20 border border-primary/30 mb-4"
                   >
-                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    {featuredDrama.rankVo.recCopy || `TOP ${featuredDrama.rankVo.sort || 1}`}
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                    <span className="text-primary text-sm font-semibold">
+                      {featuredDrama.rankVo.recCopy || `#${featuredDrama.rankVo.sort || 1} Trending`}
+                    </span>
                   </motion.div>
                 )}
                 
                 {/* Title */}
-                <h1 className="font-display text-4xl md:text-6xl lg:text-7xl text-white text-shadow-cinematic mb-4 leading-tight">
+                <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-foreground text-shadow-hero mb-4 leading-tight">
                   {featuredDrama.bookName}
                 </h1>
                 
+                {/* Meta Info */}
+                <div className="flex flex-wrap items-center gap-4 mb-4 text-sm">
+                  {featuredDrama.chapterCount && (
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <Play className="w-4 h-4" />
+                      {featuredDrama.chapterCount} Episode
+                    </span>
+                  )}
+                  {featuredDrama.rankVo?.hotCode && (
+                    <span className="flex items-center gap-1.5 text-amber-400">
+                      <Star className="w-4 h-4 fill-current" />
+                      {featuredDrama.rankVo.hotCode}
+                    </span>
+                  )}
+                </div>
+                
                 {/* Tags */}
                 {featuredDrama.tags && (
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap gap-2 mb-5">
                     {featuredDrama.tags.slice(0, 4).map((tag) => (
                       <span 
                         key={tag} 
-                        className="px-3 py-1 rounded-full bg-white/10 text-white/80 text-xs backdrop-blur-sm"
+                        className="px-3 py-1 rounded-full bg-secondary/80 text-secondary-foreground text-xs font-medium"
                       >
                         {tag}
                       </span>
@@ -177,7 +188,7 @@ export default function Home() {
                 )}
                 
                 {/* Description */}
-                <p className="text-white/70 text-sm md:text-base line-clamp-3 mb-6 max-w-xl">
+                <p className="text-muted-foreground text-sm md:text-base line-clamp-2 mb-6 max-w-xl">
                   {featuredDrama.introduction}
                 </p>
                 
@@ -186,7 +197,7 @@ export default function Home() {
                   <Link href={`/watch/${featuredDrama.bookId}/0`}>
                     <Button 
                       size="lg" 
-                      className="bg-primary hover:bg-primary/90 text-white gap-2 glow-crimson transition-all duration-300"
+                      className="bg-primary hover:bg-primary/90 text-white gap-2 glow-primary transition-all duration-300 px-6"
                     >
                       <Play className="w-5 h-5 fill-current" />
                       Tonton Sekarang
@@ -195,8 +206,8 @@ export default function Home() {
                   <Link href={`/drama/${featuredDrama.bookId}`}>
                     <Button 
                       size="lg" 
-                      variant="outline" 
-                      className="border-white/30 text-white hover:bg-white/10 gap-2"
+                      variant="secondary" 
+                      className="gap-2 bg-secondary/80 hover:bg-secondary"
                     >
                       <Info className="w-5 h-5" />
                       Detail
@@ -205,7 +216,7 @@ export default function Home() {
                   <Button 
                     size="lg" 
                     variant="ghost" 
-                    className="text-white hover:bg-white/10"
+                    className="hover:bg-white/10"
                     onClick={() => handleBookmark(featuredDrama)}
                   >
                     {isBookmarked(featuredDrama.bookId) ? (
@@ -219,17 +230,16 @@ export default function Home() {
             )}
           </AnimatePresence>
           
-          {/* Hero indicators */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+          {/* Hero Indicators */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
             {trending.slice(0, 5).map((_, i) => (
               <button
                 key={i}
-                onClick={() => {
-                  setHeroIndex(i);
-                  setHeroImageIndex(i % heroBackgrounds.length);
-                }}
-                className={`h-1 rounded-full transition-all duration-300 ${
-                  i === heroIndex ? "w-8 bg-primary" : "w-2 bg-white/30 hover:bg-white/50"
+                onClick={() => setHeroIndex(i)}
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  i === heroIndex 
+                    ? "w-8 bg-primary" 
+                    : "w-1.5 bg-white/30 hover:bg-white/50"
                 }`}
               />
             ))}
@@ -238,48 +248,60 @@ export default function Home() {
       </section>
 
       {/* Source Tabs */}
-      <div className="container mt-8">
+      <div className="container mt-8 mb-6">
         <SourceTabs activeSource={activeSource} onSourceChange={handleSourceChange} />
       </div>
 
       {/* Continue Watching Section */}
       {continueWatching.length > 0 && (
-        <Section title="Lanjutkan Menonton" href="/bookmarks">
-          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
+        <Section 
+          title="Lanjutkan Menonton" 
+          icon={<Clock className="w-5 h-5 text-primary" />}
+          href="/bookmarks"
+        >
+          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4">
             {continueWatching.map((item, index) => (
               <Link key={item.bookId} href={`/watch/${item.bookId}/${item.episodeIndex}`}>
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="relative flex-shrink-0 w-64 snap-start"
+                  className="relative flex-shrink-0 w-72 snap-start group"
                 >
-                  <div className="relative aspect-video rounded-lg overflow-hidden group">
+                  <div className="relative aspect-video rounded-xl overflow-hidden">
                     <img
                       src={item.coverWap}
                       alt={item.bookName}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                     
                     {/* Progress bar */}
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-                      <div 
+                      <motion.div 
                         className="h-full bg-primary"
-                        style={{ width: `${item.progress}%` }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${item.progress}%` }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
                       />
                     </div>
                     
                     {/* Play overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center glow-crimson">
-                        <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                      <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center glow-primary">
+                        <Play className="w-7 h-7 text-white fill-white ml-1" />
                       </div>
                     </div>
-                  </div>
-                  <div className="mt-2">
-                    <h3 className="text-sm font-medium text-foreground line-clamp-1">{item.bookName}</h3>
-                    <p className="text-xs text-muted-foreground">{item.episodeName}</p>
+                    
+                    {/* Info */}
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <h3 className="text-white font-semibold line-clamp-1 mb-1">
+                        {item.bookName}
+                      </h3>
+                      <p className="text-white/70 text-xs">
+                        {item.episodeName} • {item.progress}%
+                      </p>
+                    </div>
                   </div>
                 </motion.div>
               </Link>
@@ -289,109 +311,86 @@ export default function Home() {
       )}
 
       {/* Trending Section */}
-      <Section title="Sedang Trending" href="/search?filter=trending" loading={loading}>
-        <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
+      <Section 
+        title="Sedang Trending" 
+        icon={<TrendingUp className="w-5 h-5 text-primary" />}
+      >
+        <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4">
           {loading
-            ? Array.from({ length: 6 }).map((_, i) => (
+            ? Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex-shrink-0 snap-start">
-                  <DramaCardSkeleton />
+                  <DramaCardSkeleton size="lg" />
                 </div>
               ))
-            : trending.map((drama, index) => (
-                <motion.div
-                  key={drama.bookId}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex-shrink-0 snap-start"
-                >
-                  <DramaCard
-                    drama={drama}
-                    isBookmarked={isBookmarked(drama.bookId)}
-                    onBookmark={() => handleBookmark(drama)}
-                  />
-                </motion.div>
+            : trending.slice(0, 10).map((drama, index) => (
+                <div key={drama.bookId} className="flex-shrink-0 snap-start">
+                  <DramaCard drama={drama} index={index} size="lg" showRank />
+                </div>
               ))}
         </div>
       </Section>
 
       {/* Latest Section */}
-      <Section title="Drama Terbaru" href="/search?filter=latest" loading={loading}>
-        <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
+      <Section 
+        title="Drama Terbaru" 
+        icon={<Sparkles className="w-5 h-5 text-accent" />}
+      >
+        <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4">
           {loading
-            ? Array.from({ length: 6 }).map((_, i) => (
+            ? Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex-shrink-0 snap-start">
-                  <DramaCardSkeleton />
+                  <DramaCardSkeleton size="lg" />
                 </div>
               ))
-            : latest.map((drama, index) => (
-                <motion.div
-                  key={drama.bookId}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex-shrink-0 snap-start"
-                >
-                  <DramaCard
-                    drama={drama}
-                    isBookmarked={isBookmarked(drama.bookId)}
-                    onBookmark={() => handleBookmark(drama)}
-                  />
-                </motion.div>
+            : latest.slice(0, 10).map((drama, index) => (
+                <div key={drama.bookId} className="flex-shrink-0 snap-start">
+                  <DramaCard drama={drama} index={index} size="lg" />
+                </div>
               ))}
         </div>
       </Section>
 
-      {/* For You Section - Only show if endpoint available */}
-      {isEndpointAvailable(activeSource, 'foryou') && (
-      <Section title="Untuk Kamu" href="/search?filter=foryou" loading={loading}>
-        <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory">
+      {/* For You Section */}
+      <Section 
+        title="Untuk Kamu" 
+        icon={<Star className="w-5 h-5 text-amber-400" />}
+      >
+        <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4">
           {loading
-            ? Array.from({ length: 6 }).map((_, i) => (
+            ? Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex-shrink-0 snap-start">
-                  <DramaCardSkeleton />
+                  <DramaCardSkeleton size="lg" />
                 </div>
               ))
-            : forYou.map((drama, index) => (
-                <motion.div
-                  key={drama.bookId}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex-shrink-0 snap-start"
-                >
-                  <DramaCard
-                    drama={drama}
-                    isBookmarked={isBookmarked(drama.bookId)}
-                    onBookmark={() => handleBookmark(drama)}
-                  />
-                </motion.div>
+            : forYou.slice(0, 10).map((drama, index) => (
+                <div key={drama.bookId} className="flex-shrink-0 snap-start">
+                  <DramaCard drama={drama} index={index} size="lg" />
+                </div>
               ))}
         </div>
       </Section>
-      )}
     </div>
   );
 }
 
-// Section Component
 interface SectionProps {
   title: string;
+  icon?: React.ReactNode;
   href?: string;
   children: React.ReactNode;
-  loading?: boolean;
 }
 
-function Section({ title, href, children, loading }: SectionProps) {
+function Section({ title, icon, href, children }: SectionProps) {
   return (
-    <section className="container py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-display text-2xl md:text-3xl text-foreground">
+    <section className="container mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display text-xl md:text-2xl text-foreground flex items-center gap-2">
+          {icon}
           {title}
         </h2>
-        {href && !loading && (
+        {href && (
           <Link href={href}>
-            <Button variant="ghost" className="gap-1 text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-1">
               Lihat Semua
               <ChevronRight className="w-4 h-4" />
             </Button>

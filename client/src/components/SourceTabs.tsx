@@ -1,9 +1,10 @@
 /**
  * Source Tabs Component
- * Multi-source navigation tabs
+ * Design: Premium Streaming Experience
  */
 
 import { motion } from "framer-motion";
+import { Film, Clapperboard, Tv, Heart, Zap, Sparkles } from "lucide-react";
 import { SOURCES, type SourceType } from "@/lib/api";
 
 interface SourceTabsProps {
@@ -11,43 +12,71 @@ interface SourceTabsProps {
   onSourceChange: (source: SourceType) => void;
 }
 
+// Icon mapping for each source
+const sourceIcons: Record<SourceType, React.ElementType> = {
+  dramabox: Film,
+  reelshort: Clapperboard,
+  netshort: Tv,
+  melolo: Heart,
+  flickreels: Zap,
+  freereels: Sparkles,
+};
+
+// Color mapping for each source
+const sourceColors: Record<SourceType, string> = {
+  dramabox: "text-rose-400",
+  reelshort: "text-blue-400",
+  netshort: "text-emerald-400",
+  melolo: "text-pink-400",
+  flickreels: "text-amber-400",
+  freereels: "text-purple-400",
+};
+
 export default function SourceTabs({ activeSource, onSourceChange }: SourceTabsProps) {
   const sources = Object.values(SOURCES);
 
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide mb-8">
-      <div className="flex gap-2 min-w-max px-4 md:px-8">
+    <div className="relative">
+      {/* Scrollable container */}
+      <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4">
         {sources.map((source) => {
           const isActive = activeSource === source.id;
+          const Icon = sourceIcons[source.id as SourceType];
+          const iconColor = sourceColors[source.id as SourceType];
+          
           return (
             <motion.button
               key={source.id}
               onClick={() => onSourceChange(source.id as SourceType)}
-              className={`
-                relative px-6 py-3 rounded-xl font-medium transition-all
-                ${isActive 
-                  ? 'text-white shadow-lg' 
-                  : 'text-muted-foreground hover:text-foreground bg-background/50 hover:bg-background/80'
-                }
-              `}
-              whileHover={{ scale: 1.05 }}
+              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all duration-300 ${
+                isActive
+                  ? "text-white"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              }`}
               whileTap={{ scale: 0.95 }}
             >
+              {/* Active background */}
               {isActive && (
                 <motion.div
-                  layoutId="activeTab"
-                  className={`absolute inset-0 bg-gradient-to-r ${source.color} rounded-xl`}
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  layoutId="source-bg"
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-primary/80"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
-              <span className="relative z-10 flex items-center gap-2">
-                <span className="text-xl">{source.icon}</span>
+              
+              {/* Content */}
+              <span className="relative flex items-center gap-2">
+                <Icon className={`w-4 h-4 ${isActive ? "text-white" : iconColor}`} />
                 <span className="hidden sm:inline">{source.name}</span>
               </span>
             </motion.button>
           );
         })}
       </div>
+      
+      {/* Fade edges */}
+      <div className="absolute left-0 top-0 bottom-2 w-4 bg-gradient-to-r from-background to-transparent pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-2 w-4 bg-gradient-to-l from-background to-transparent pointer-events-none" />
     </div>
   );
 }

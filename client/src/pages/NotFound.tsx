@@ -1,58 +1,60 @@
 /**
- * 404 Not Found Page
- * Design: Neo-Noir Cinema
+ * 404 Not Found Page - Premium Streaming Experience
+ * Design: Modern, Clean, Netflix-inspired
  */
 
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { Home, Search, ArrowLeft } from "lucide-react";
+import { Home, Search, Film, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <motion.div
+      <div className="absolute inset-0 gradient-mesh opacity-50" />
+      
+      <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center max-w-md"
+        className="relative text-center max-w-md"
       >
-        {/* Cinematic 404 */}
-        <motion.div
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 15 }}
-          className="relative mb-8"
+        {/* Icon */}
+        <motion.div 
+          className="w-32 h-32 mx-auto mb-8 rounded-full bg-secondary flex items-center justify-center"
+          animate={{ y: [0, -10, 0] }}
+          transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
         >
-          <h1 className="font-display text-[150px] leading-none text-primary/20">
-            404
-          </h1>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-6xl">🎬</span>
-          </div>
+          <Film className="w-16 h-16 text-muted-foreground" />
         </motion.div>
-
-        <h2 className="font-display text-3xl text-foreground mb-4">
-          Scene Not Found
+        
+        {/* 404 Text */}
+        <h1 className="font-display text-8xl gradient-text mb-4">404</h1>
+        
+        {/* Message */}
+        <h2 className="text-2xl font-display text-foreground mb-3">
+          Halaman Tidak Ditemukan
         </h2>
         <p className="text-muted-foreground mb-8">
-          Sepertinya kamu tersesat di balik layar. Halaman yang kamu cari tidak ada atau sudah dipindahkan.
+          Sepertinya halaman yang kamu cari sudah dipindahkan atau tidak tersedia. 
+          Mari kembali dan temukan drama menarik lainnya!
         </p>
-
+        
+        {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/">
-            <Button className="w-full sm:w-auto gap-2 bg-primary hover:bg-primary/90">
-              <Home className="w-4 h-4" />
+            <Button size="lg" className="gap-2 glow-primary w-full sm:w-auto">
+              <Home className="w-5 h-5" />
               Kembali ke Beranda
             </Button>
           </Link>
           <Link href="/search">
-            <Button variant="outline" className="w-full sm:w-auto gap-2">
-              <Search className="w-4 h-4" />
+            <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
+              <Search className="w-5 h-5" />
               Cari Drama
             </Button>
           </Link>
         </div>
-
+        
         <Button
           variant="ghost"
           className="mt-6 text-muted-foreground"
