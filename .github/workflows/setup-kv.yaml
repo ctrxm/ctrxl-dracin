@@ -1,0 +1,43 @@
+name: Setup KV Namespace (One-time)
+
+# This workflow only runs manually to create KV namespace
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    name: Create KV Namespace
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
+      - name: Create KV Namespace
+        run: |
+          cd api
+          wrangler kv:namespace create API_CACHE
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Instructions
+        run: |
+          echo "✅ KV Namespace created!"
+          echo ""
+          echo "📝 Next steps:"
+          echo "1. Copy the KV namespace ID from the output above"
+          echo "2. Update api/wrangler.toml with the ID"
+          echo "3. Commit and push the changes"
+          echo ""
+          echo "Example:"
+          echo "[[kv_namespaces]]"
+          echo "binding = \"API_CACHE\""
+          echo "id = \"YOUR_KV_NAMESPACE_ID_HERE\""
