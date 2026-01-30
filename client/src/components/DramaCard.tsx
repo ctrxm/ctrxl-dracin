@@ -44,7 +44,7 @@ export default function DramaCard({ drama, index = 0, size = "md", showRank = fa
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
     >
-      <Link href={`/drama/${drama.bookId}`}>
+      <Link href={`/drama/${drama.source || 'dramabox'}/${drama.bookId}`}>
         <motion.div
           ref={cardRef}
           className={`relative ${sizeClasses[size]} rounded-2xl overflow-hidden cursor-pointer group card-hover`}

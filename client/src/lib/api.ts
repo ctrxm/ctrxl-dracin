@@ -39,7 +39,7 @@ export const SOURCES = {
       latest: '/foryou', // NetShort uses foryou for latest
       foryou: '/foryou',
       search: '/search',
-      detail: '/detail',
+      detail: null, // Not available in API
       allepisode: '/allepisode'
     }
   },
@@ -145,11 +145,18 @@ function transformMeloloData(data: any): Drama[] {
   const books = data.books || [];
   if (!Array.isArray(books)) return [];
   
-  return books.map((book: any) => ({
+  return books.map((book: any) => {
+    // Convert HEIC URLs to WebP for better browser compatibility
+    let thumbUrl = book.thumb_url || '';
+    if (thumbUrl.includes('.heic')) {
+      thumbUrl = thumbUrl.replace('.heic', '.webp');
+    }
+    
+    return {
     bookId: book.book_id || book.media_id || '',
     bookName: book.book_name || '',
-    coverWap: book.thumb_url || '',
-    cover: book.thumb_url || '',
+    coverWap: thumbUrl,
+    cover: thumbUrl,
     chapterCount: book.serial_count || book.last_chapter_index || 0,
     introduction: book.abstract || book.sub_abstract || '',
     tags: book.stat_infos || [],
@@ -159,7 +166,8 @@ function transformMeloloData(data: any): Drama[] {
       hotCode: book.read_count || '',
       sort: 0
     } : undefined
-  }));
+    };
+  });
 }
 
 // Transform NetShort response format to Drama format
@@ -309,6 +317,12 @@ export async function searchDrama(query: string, source: SourceType = 'dramabox'
 
 export async function getDramaDetail(bookId: string, source: SourceType = 'dramabox'): Promise<DramaDetail | null> {
   try {
+    // NetShort doesn't have detail endpoint, return null
+    if (source === 'netshort') {
+      console.warn('NetShort does not have detail endpoint');
+      return null;
+    }
+    
     const data = await fetchFromSource<DramaDetail>(source, 'detail', `?bookId=${bookId}`);
     return data ? { ...data, source } : null;
   } catch (error) {

@@ -19,7 +19,7 @@ import { useBookmarks, useLastWatchedEpisode } from "@/hooks/useLocalStorage";
 import { toast } from "sonner";
 
 export default function DramaDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { id, source } = useParams<{ id: string; source: string }>();
   const [, setLocation] = useLocation();
   const [drama, setDrama] = useState<DramaDetailType | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -35,9 +35,10 @@ export default function DramaDetail() {
       if (!id) return;
       try {
         setLoading(true);
+        const sourceType = (source as any) || 'dramabox';
         const [dramaData, episodesData] = await Promise.all([
-          getDramaDetail(id),
-          getAllEpisodes(id),
+          getDramaDetail(id, sourceType),
+          getAllEpisodes(id, sourceType),
         ]);
         setDrama(dramaData);
         setEpisodes(episodesData);
