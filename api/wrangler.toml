@@ -1,0 +1,20 @@
+name = "ctrxl-dracin-api"
+main = "src/index.ts"
+compatibility_date = "2026-01-30"
+
+# KV namespace for caching
+[[kv_namespaces]]
+binding = "API_CACHE"
+id = "YOUR_KV_NAMESPACE_ID"  # Will be created during deployment
+
+# Environment variables
+[vars]
+# Add non-sensitive variables here
+
+# Secrets (set via: wrangler secret put ADMIN_PASSWORD)
+# ADMIN_PASSWORD = "your-secure-password"
+
+# Routes (optional - for custom domain)
+# routes = [
+#   { pattern = "api.yourdomain.com/*", zone_name = "yourdomain.com" }
+# ]

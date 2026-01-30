@@ -2,10 +2,17 @@
  * CTRXL DRACIN API Service
  * Design: Neo-Noir Cinema
  * 
- * All data fetched from https://api.sansekai.my.id/api/dramabox
+ * Supports multiple API sources:
+ * - Custom API backend (Cloudflare Workers) - with fallback
+ * - Direct API (Sansekai) - fallback
  */
 
-const API_BASE = "https://api.sansekai.my.id/api/dramabox";
+// API Configuration
+const USE_CUSTOM_API = import.meta.env.VITE_USE_CUSTOM_API === 'true';
+const CUSTOM_API_URL = import.meta.env.VITE_API_URL || 'https://ctrxl-dracin-api.YOUR_SUBDOMAIN.workers.dev';
+const FALLBACK_API_URL = "https://api.sansekai.my.id/api/dramabox";
+
+const API_BASE = USE_CUSTOM_API ? CUSTOM_API_URL + '/api' : FALLBACK_API_URL;
 
 export interface Drama {
   bookId: string;
@@ -55,14 +62,30 @@ async function fetchWithCache<T>(url: string): Promise<T> {
     return cached.data as T;
   }
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    cache.set(url, { data, timestamp: Date.now() });
+    return data;
+  } catch (error) {
+    // If custom API fails and we're using it, try fallback
+    if (USE_CUSTOM_API && url.includes(CUSTOM_API_URL)) {
+      console.warn('Custom API failed, trying fallback...', error);
+      const fallbackUrl = url.replace(CUSTOM_API_URL + '/api', FALLBACK_API_URL);
+      const response = await fetch(fallbackUrl);
+      if (!response.ok) {
+        throw new Error(`Fallback API Error: ${response.status}`);
+      }
+      const data = await response.json();
+      cache.set(url, { data, timestamp: Date.now() });
+      return data;
+    }
+    throw error;
   }
-  
-  const data = await response.json();
-  cache.set(url, { data, timestamp: Date.now() });
-  return data;
 }
 
 export async function getTrending(): Promise<Drama[]> {
@@ -128,4 +151,14 @@ export function getVideoUrl(episode: Episode, preferredQuality: number = 720): s
 // Clear cache (useful for manual refresh)
 export function clearCache(): void {
   cache.clear();
+}
+
+// Get API info
+export function getAPIInfo() {
+  return {
+    useCustomAPI: USE_CUSTOM_API,
+    customAPIUrl: CUSTOM_API_URL,
+    fallbackAPIUrl: FALLBACK_API_URL,
+    currentAPIBase: API_BASE,
+  };
 }

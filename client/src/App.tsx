@@ -16,6 +16,7 @@ import DramaDetail from "./pages/DramaDetail";
 import Watch from "./pages/Watch";
 import Search from "./pages/Search";
 import Bookmarks from "./pages/Bookmarks";
+import Admin from "./pages/Admin";
 import BottomNav from "./components/BottomNav";
 
 function Router() {
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/watch/:id/:episode?" component={Watch} />
       <Route path="/search" component={Search} />
       <Route path="/bookmarks" component={Bookmarks} />
+      <Route path="/admin" component={Admin} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
