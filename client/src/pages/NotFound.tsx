@@ -1,49 +1,67 @@
+/**
+ * 404 Not Found Page
+ * Design: Neo-Noir Cinema
+ */
+
+import { motion } from "framer-motion";
+import { Link } from "wouter";
+import { Home, Search, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Home } from "lucide-react";
-import { useLocation } from "wouter";
 
 export default function NotFound() {
-  const [, setLocation] = useLocation();
-
-  const handleGoHome = () => {
-    setLocation("/");
-  };
-
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-      <Card className="w-full max-w-lg mx-4 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-        <CardContent className="pt-8 pb-8 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="absolute inset-0 bg-red-100 rounded-full animate-pulse" />
-              <AlertCircle className="relative h-16 w-16 text-red-500" />
-            </div>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center max-w-md"
+      >
+        {/* Cinematic 404 */}
+        <motion.div
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 15 }}
+          className="relative mb-8"
+        >
+          <h1 className="font-display text-[150px] leading-none text-primary/20">
+            404
+          </h1>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-6xl">🎬</span>
           </div>
+        </motion.div>
 
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">404</h1>
+        <h2 className="font-display text-3xl text-foreground mb-4">
+          Scene Not Found
+        </h2>
+        <p className="text-muted-foreground mb-8">
+          Sepertinya kamu tersesat di balik layar. Halaman yang kamu cari tidak ada atau sudah dipindahkan.
+        </p>
 
-          <h2 className="text-xl font-semibold text-slate-700 mb-4">
-            Page Not Found
-          </h2>
-
-          <p className="text-slate-600 mb-8 leading-relaxed">
-            Sorry, the page you are looking for doesn't exist.
-            <br />
-            It may have been moved or deleted.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              onClick={handleGoHome}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Go Home
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/">
+            <Button className="w-full sm:w-auto gap-2 bg-primary hover:bg-primary/90">
+              <Home className="w-4 h-4" />
+              Kembali ke Beranda
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </Link>
+          <Link href="/search">
+            <Button variant="outline" className="w-full sm:w-auto gap-2">
+              <Search className="w-4 h-4" />
+              Cari Drama
+            </Button>
+          </Link>
+        </div>
+
+        <Button
+          variant="ghost"
+          className="mt-6 text-muted-foreground"
+          onClick={() => window.history.back()}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Kembali ke halaman sebelumnya
+        </Button>
+      </motion.div>
     </div>
   );
 }

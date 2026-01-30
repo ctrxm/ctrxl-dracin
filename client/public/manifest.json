@@ -1,0 +1,27 @@
+{
+  "name": "CTRXL DRACIN - Drama China Subtitle Indonesia",
+  "short_name": "CTRXL DRACIN",
+  "description": "Nonton Drama China Subtitle Indonesia terlengkap dan terbaru. Streaming gratis dengan kualitas HD.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0B",
+  "theme_color": "#FF2D55",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["entertainment", "video"],
+  "lang": "id",
+  "dir": "ltr"
+}
