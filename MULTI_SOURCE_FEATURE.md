@@ -1,8 +1,8 @@
 # 🎬 Multi-Source Feature
 
-## 🎉 Fitur Baru: 6 Sumber Drama!
+## 🎉 Fitur Baru: 3 Sumber Drama!
 
-CTRXL DRACIN sekarang mendukung **6 sumber drama berbeda** dengan sistem tab yang elegant!
+CTRXL DRACIN sekarang mendukung **3 sumber drama berbeda** dengan sistem tab yang elegant!
 
 ---
 
@@ -14,35 +14,17 @@ CTRXL DRACIN sekarang mendukung **6 sumber drama berbeda** dengan sistem tab yan
 - Drama populer dan trending
 - **Color**: Amber/Orange gradient
 
-### 2. **ReelShort** 🎞️
-- Short Drama Series
-- Episode pendek dan menarik
-- Perfect untuk binge-watching
-- **Color**: Purple/Pink gradient
-
-### 3. **NetShort** 📺
+### 2. **NetShort** 📺
 - Network Short Videos
 - Drama dari berbagai network
 - Konten beragam
 - **Color**: Blue/Cyan gradient
 
-### 4. **Melolo** 💝
+### 3. **Melolo** 💝
 - Melodrama Collection
 - Drama romantis dan emosional
 - Cerita yang menyentuh hati
 - **Color**: Rose/Red gradient
-
-### 5. **FlickReels** ⚡
-- Quick Flick Stories
-- Cerita cepat dan seru
-- Easy to watch
-- **Color**: Yellow/Amber gradient
-
-### 6. **FreeReels** 🎪
-- Free Drama Content
-- Konten gratis berkualitas
-- Akses tanpa batas
-- **Color**: Green/Emerald gradient
 
 ---
 
@@ -57,7 +39,7 @@ CTRXL DRACIN sekarang mendukung **6 sumber drama berbeda** dengan sistem tab yan
 ### 📊 Per-Source Content
 - **Trending** - Drama yang sedang trending di source tersebut
 - **Latest** - Drama terbaru dari source
-- **For You** - Rekomendasi personal per source
+- **For You** - Rekomendasi personal per source (jika tersedia)
 
 ### ⚡ Performance
 - **Cached API responses** - Fast loading
@@ -70,7 +52,7 @@ CTRXL DRACIN sekarang mendukung **6 sumber drama berbeda** dengan sistem tab yan
 
 ### Tab Design
 ```
-[🎬 DramaBox] [🎞️ ReelShort] [📺 NetShort] [💝 Melolo] [⚡ FlickReels] [🎪 FreeReels]
+[🎬 DramaBox] [📺 NetShort] [💝 Melolo]
      ▲ Active (gradient background)
 ```
 
@@ -93,7 +75,7 @@ CTRXL DRACIN sekarang mendukung **6 sumber drama berbeda** dengan sistem tab yan
 
 **Multi-Source Support:**
 ```typescript
-export type SourceType = 'dramabox' | 'reelshort' | 'netshort' | 'melolo' | 'flickreels' | 'freereels';
+export type SourceType = 'dramabox' | 'netshort' | 'melolo';
 
 // Generic function for any source
 async function fetchFromSource<T>(source: SourceType, endpoint: string): Promise<T> {
@@ -102,7 +84,7 @@ async function fetchFromSource<T>(source: SourceType, endpoint: string): Promise
 }
 
 // Usage
-const trending = await getTrending('reelshort');
+const trending = await getTrending('netshort');
 const latest = await getLatest('melolo');
 ```
 
@@ -114,6 +96,7 @@ const latest = await getLatest('melolo');
 - `description` - Short description
 - `icon` - Emoji icon
 - `color` - Gradient color classes
+- `endpoints` - Available API endpoints
 
 ```typescript
 export const SOURCES = {
@@ -122,9 +105,46 @@ export const SOURCES = {
     name: 'DramaBox',
     description: 'Premium Chinese Drama',
     icon: '🎬',
-    color: 'from-amber-500 to-orange-600'
+    color: 'from-amber-500 to-orange-600',
+    endpoints: {
+      trending: '/trending',
+      latest: '/latest',
+      foryou: '/foryou',
+      search: '/search',
+      detail: '/detail',
+      allepisode: '/allepisode'
+    }
   },
-  // ... more sources
+  netshort: {
+    id: 'netshort',
+    name: 'NetShort',
+    description: 'Network Short Videos',
+    icon: '📺',
+    color: 'from-blue-500 to-cyan-600',
+    endpoints: {
+      trending: '/trending',
+      latest: '/latest',
+      foryou: null, // Not available
+      search: '/search',
+      detail: '/detail',
+      allepisode: '/allepisode'
+    }
+  },
+  melolo: {
+    id: 'melolo',
+    name: 'Melolo',
+    description: 'Melodrama Collection',
+    icon: '💝',
+    color: 'from-rose-500 to-red-600',
+    endpoints: {
+      trending: '/trending',
+      latest: '/latest',
+      foryou: null, // Not available
+      search: '/search',
+      detail: '/detail',
+      allepisode: '/stream' // Melolo uses /stream instead of /allepisode
+    }
+  }
 };
 ```
 
@@ -174,15 +194,15 @@ useEffect(() => {
 User bisa explore drama dari berbagai platform dalam satu aplikasi.
 
 ### 2. Find Specific Type
-- Mau drama pendek? → **ReelShort** atau **FlickReels**
+- Mau drama pendek? → **NetShort**
 - Mau melodrama? → **Melolo**
-- Mau konten gratis? → **FreeReels**
+- Mau drama premium? → **DramaBox**
 
 ### 3. Compare Sources
 User bisa compare trending drama dari berbagai platform.
 
 ### 4. Backup Source
-Jika satu source down atau konten terbatas, ada 5 source lainnya.
+Jika satu source down atau konten terbatas, ada source lainnya.
 
 ---
 
@@ -196,7 +216,7 @@ Jika satu source down atau konten terbatas, ada 5 source lainnya.
 - [ ] **Cross-source recommendations** - Recommend similar drama across sources
 
 ### Possible Additions
-- [ ] **More sources** - Anime, Komik, MovieBox (already in API)
+- [ ] **More sources** - Add more drama sources as needed
 - [ ] **Source comparison** - Side-by-side comparison
 - [ ] **Source preferences** - Remember user's preferred source
 - [ ] **Source notifications** - Alert when new content in favorite source
@@ -225,7 +245,7 @@ Jika satu source down atau konten terbatas, ada 5 source lainnya.
 ## 🎉 Benefits
 
 ### For Users
-- ✅ **More content** - 6x more drama sources
+- ✅ **More content** - 3 different drama sources
 - ✅ **Better discovery** - Explore different platforms
 - ✅ **Backup options** - Multiple sources available
 - ✅ **Easy switching** - One-click source change
@@ -234,21 +254,42 @@ Jika satu source down atau konten terbatas, ada 5 source lainnya.
 - ✅ **Clean architecture** - Generic API functions
 - ✅ **Type-safe** - TypeScript source types
 - ✅ **Maintainable** - Easy to add new sources
-- ✅ **Scalable** - Support unlimited sources
+- ✅ **Scalable** - Support additional sources
 
 ---
 
 ## 🔗 API Endpoints
 
-All sources support these endpoints:
-- `/trending` - Trending drama
-- `/latest` - Latest drama
-- `/foryou` - Recommended drama
-- `/search` - Search drama
-- `/detail` - Drama details
-- `/allepisode` - All episodes
+### DramaBox
+All standard endpoints supported:
+- `/dramabox/trending` - Trending drama
+- `/dramabox/latest` - Latest drama
+- `/dramabox/foryou` - Recommended drama
+- `/dramabox/search` - Search drama
+- `/dramabox/detail` - Drama details
+- `/dramabox/allepisode` - All episodes
 
-**Base URL**: `https://api.sansekai.my.id/api/{source}/{endpoint}`
+### NetShort
+Supported endpoints:
+- `/netshort/trending` - Trending drama
+- `/netshort/latest` - Latest drama
+- `/netshort/search` - Search drama
+- `/netshort/detail` - Drama details
+- `/netshort/allepisode` - All episodes
+
+**Note**: NetShort does NOT have `/foryou` endpoint
+
+### Melolo
+Supported endpoints:
+- `/melolo/trending` - Trending drama
+- `/melolo/latest` - Latest drama
+- `/melolo/search` - Search drama
+- `/melolo/detail` - Drama details
+- `/melolo/stream` - Stream episodes (uses videoId from detail)
+
+**Note**: Melolo uses `/stream` instead of `/allepisode` and requires `videoId` parameter from the detail response
+
+**Base URL**: `https://api.sansekai.my.id/api`
 
 ---
 
@@ -270,15 +311,15 @@ All sources support these endpoints:
 ## 🎊 Conclusion
 
 Multi-source feature memberikan:
-- **6x more content** untuk explore
+- **3 quality sources** untuk explore
 - **Better user experience** dengan elegant tabs
 - **Backup reliability** dengan multiple sources
 - **Future-proof architecture** untuk expansion
 
-**Enjoy exploring drama dari 6 sumber berbeda!** 🚀
+**Enjoy exploring drama dari 3 sumber berbeda!** 🚀
 
 ---
 
-**Version**: 2.1.0  
-**Released**: January 30, 2026  
+**Version**: 2.2.0  
+**Updated**: January 31, 2026  
 **Status**: ✅ Production Ready

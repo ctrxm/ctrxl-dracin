@@ -4,7 +4,7 @@
  */
 
 import { motion } from "framer-motion";
-import { Film, Clapperboard, Tv, Heart, Zap, Sparkles } from "lucide-react";
+import { Film, Tv, Heart } from "lucide-react";
 import { SOURCES, type SourceType } from "@/lib/api";
 
 interface SourceTabsProps {
@@ -15,21 +15,15 @@ interface SourceTabsProps {
 // Icon mapping for each source
 const sourceIcons: Record<SourceType, React.ElementType> = {
   dramabox: Film,
-  reelshort: Clapperboard,
   netshort: Tv,
   melolo: Heart,
-  flickreels: Zap,
-  freereels: Sparkles,
 };
 
 // Color mapping for each source
 const sourceColors: Record<SourceType, string> = {
   dramabox: "text-rose-400",
-  reelshort: "text-blue-400",
   netshort: "text-emerald-400",
   melolo: "text-pink-400",
-  flickreels: "text-amber-400",
-  freereels: "text-purple-400",
 };
 
 export default function SourceTabs({ activeSource, onSourceChange }: SourceTabsProps) {

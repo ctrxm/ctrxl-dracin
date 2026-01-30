@@ -2,14 +2,14 @@
  * CTRXL DRACIN API Service
  * Design: Neo-Noir Cinema
  * 
- * Multi-Source Support: DramaBox, ReelShort, NetShort, Melolo, FlickReels, FreeReels
+ * Multi-Source Support: DramaBox, NetShort, Melolo
  * With graceful fallback for missing endpoints
  */
 
 const API_BASE = "https://api.sansekai.my.id/api";
 
 // Available sources
-export type SourceType = 'dramabox' | 'reelshort' | 'netshort' | 'melolo' | 'flickreels' | 'freereels';
+export type SourceType = 'dramabox' | 'netshort' | 'melolo';
 
 export const SOURCES = {
   dramabox: {
@@ -27,21 +27,7 @@ export const SOURCES = {
       allepisode: '/allepisode'
     }
   },
-  reelshort: {
-    id: 'reelshort',
-    name: 'ReelShort',
-    description: 'Short Drama Series',
-    icon: '🎞️',
-    color: 'from-purple-500 to-pink-600',
-    endpoints: {
-      trending: '/homepage', // ReelShort uses homepage
-      latest: '/homepage',
-      foryou: '/homepage',
-      search: '/search',
-      detail: '/detail',
-      allepisode: '/allepisode'
-    }
-  },
+
   netshort: {
     id: 'netshort',
     name: 'NetShort',
@@ -70,36 +56,6 @@ export const SOURCES = {
       search: '/search',
       detail: '/detail',
       allepisode: '/stream'
-    }
-  },
-  flickreels: {
-    id: 'flickreels',
-    name: 'FlickReels',
-    description: 'Quick Flick Stories',
-    icon: '⚡',
-    color: 'from-yellow-500 to-amber-600',
-    endpoints: {
-      trending: '/trending',
-      latest: '/latest',
-      foryou: null, // Unknown, assume not available
-      search: '/search',
-      detail: '/detail',
-      allepisode: '/allepisode'
-    }
-  },
-  freereels: {
-    id: 'freereels',
-    name: 'FreeReels',
-    description: 'Free Drama Content',
-    icon: '🎪',
-    color: 'from-green-500 to-emerald-600',
-    endpoints: {
-      trending: '/trending',
-      latest: '/latest',
-      foryou: null, // Unknown, assume not available
-      search: '/search',
-      detail: '/detail',
-      allepisode: '/allepisode'
     }
   }
 } as const;
@@ -285,14 +241,14 @@ export async function getAllEpisodes(bookId: string, source: SourceType = 'drama
 
 // Multi-source: Get content from all sources
 export async function getAllSourcesTrending(): Promise<Drama[]> {
-  const sources: SourceType[] = ['dramabox', 'reelshort', 'netshort', 'melolo', 'flickreels', 'freereels'];
+  const sources: SourceType[] = ['dramabox', 'netshort', 'melolo'];
   const promises = sources.map(source => getTrending(source));
   const results = await Promise.all(promises);
   return results.flat();
 }
 
 export async function getAllSourcesLatest(): Promise<Drama[]> {
-  const sources: SourceType[] = ['dramabox', 'reelshort', 'netshort', 'melolo', 'flickreels', 'freereels'];
+  const sources: SourceType[] = ['dramabox', 'netshort', 'melolo'];
   const promises = sources.map(source => getLatest(source));
   const results = await Promise.all(promises);
   return results.flat();
