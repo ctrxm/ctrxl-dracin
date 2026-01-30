@@ -8,7 +8,20 @@ Proyek ini telah dioptimalkan untuk mengatasi masalah pemutaran video seperti la
 
 ## ✨ Fitur
 
+### 🎥 Video Player
 - **UI Sinematik**: Antarmuka gelap dan imersif yang terinspirasi oleh sinema neo-noir
+- **Zero Lag Playback**: Hardware acceleration, optimasi rendering GPU
+- **Auto Next Episode**: Seamless binge-watching experience
+- **Progress Tracking**: Resume dari terakhir ditonton
+
+### 🔧 Custom API Backend (NEW!)
+- **Multiple Sources**: Aggregate dari Sansekai & Dramabos
+- **Automatic Fallback**: Redundancy jika satu API down
+- **Edge Caching**: Ultra-fast response via Cloudflare KV
+- **Admin Panel**: Monitor dan manage API sources
+- **GitHub Actions**: Auto-deploy tanpa PC/VPS
+
+### 📱 User Experience
 - **Streaming Video yang Dioptimalkan**:
     - **Buffering Adaptif**: Mengelola buffering video secara cerdas untuk mencegah gangguan
     - **Caching Service Worker**: Menyimpan segmen video dan respons API dalam cache untuk waktu muat yang lebih cepat dan kemampuan pemutaran offline
@@ -26,7 +39,10 @@ Proyek ini telah dioptimalkan untuk mengatasi masalah pemutaran video seperti la
 - **Routing**: [wouter](https://github.com/molefrog/wouter) - Lightweight React router
 - **Animasi**: [Framer Motion](https://www.framer.com/motion/)
 - **Manajemen State**: React Hooks & Context API
-- **Sumber API**: `api.sansekai.my.id`
+- **API Backend**: Cloudflare Workers (custom aggregator)
+- **API Sources**: Sansekai, Dramabos (multiple sources dengan fallback)
+- **Caching**: Cloudflare KV
+- **CI/CD**: GitHub Actions
 
 ## 🛠️ Pengembangan Lokal
 
@@ -61,6 +77,18 @@ Untuk menjalankan proyek ini secara lokal, ikuti langkah-langkah berikut:
     pnpm run build
     ```
     Output akan berada di direktori `dist/public/`.
+
+## 🚀 Quick Start Deployment
+
+### Deploy API Backend (10 menit)
+
+**Tanpa PC/VPS - Hanya dari browser!**
+
+Ikuti panduan lengkap: **[QUICK_START.md](./QUICK_START.md)**
+
+Atau lihat dokumentasi detail: **[GITHUB_ACTIONS_SETUP.md](./GITHUB_ACTIONS_SETUP.md)**
+
+### Deploy Frontend (Cloudflare Pages)
 
 ## ☁️ Deployment di Cloudflare Pages
 
@@ -147,6 +175,29 @@ Untuk menggunakan custom domain:
 2. Klik tab **"Custom domains"**
 3. Klik **"Set up a custom domain"**
 4. Ikuti instruksi untuk menambahkan domain Anda
+
+## 🎛️ Admin Panel
+
+Akses admin panel untuk manage API sources:
+
+1. Buka: `https://yourdomain.com/admin`
+2. Login dengan password yang di-set di GitHub Secrets
+3. Monitor API sources, view stats, clear cache
+
+**Features:**
+- View all API sources status
+- Monitor enabled/disabled sources
+- Check system statistics
+- Clear API cache
+- Real-time monitoring
+
+## 📚 Dokumentasi
+
+- **[QUICK_START.md](./QUICK_START.md)** - Deploy API dalam 10 menit
+- **[GITHUB_ACTIONS_SETUP.md](./GITHUB_ACTIONS_SETUP.md)** - Setup GitHub Actions auto-deploy
+- **[API_ADMIN_GUIDE.md](./API_ADMIN_GUIDE.md)** - Panduan lengkap API & Admin Panel
+- **[FIX_LAG_DETAILS.md](./FIX_LAG_DETAILS.md)** - Technical details optimasi video
+- **[CLOUDFLARE_DEPLOYMENT.md](./CLOUDFLARE_DEPLOYMENT.md)** - Deployment troubleshooting
 
 ## 📁 Struktur Project
 
