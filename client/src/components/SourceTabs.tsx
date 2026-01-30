@@ -4,7 +4,7 @@
  */
 
 import { motion } from "framer-motion";
-import { Film, Tv, Heart } from "lucide-react";
+import { Film, Tv } from "lucide-react";
 import { SOURCES, type SourceType } from "@/lib/api";
 
 interface SourceTabsProps {
@@ -16,14 +16,12 @@ interface SourceTabsProps {
 const sourceIcons: Record<SourceType, React.ElementType> = {
   dramabox: Film,
   netshort: Tv,
-  melolo: Heart,
 };
 
 // Color mapping for each source
 const sourceColors: Record<SourceType, string> = {
   dramabox: "text-rose-400",
   netshort: "text-emerald-400",
-  melolo: "text-pink-400",
 };
 
 export default function SourceTabs({ activeSource, onSourceChange }: SourceTabsProps) {

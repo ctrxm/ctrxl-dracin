@@ -2,14 +2,14 @@
  * CTRXL DRACIN API Service
  * Design: Neo-Noir Cinema
  * 
- * Multi-Source Support: DramaBox, NetShort, Melolo
+ * Multi-Source Support: DramaBox, NetShort
  * With graceful fallback for missing endpoints
  */
 
 const API_BASE = "https://api.sansekai.my.id/api";
 
 // Available sources
-export type SourceType = 'dramabox' | 'netshort' | 'melolo';
+export type SourceType = 'dramabox' | 'netshort';
 
 export const SOURCES = {
   dramabox: {
@@ -41,21 +41,6 @@ export const SOURCES = {
       search: '/search',
       detail: null, // Not available in API
       allepisode: '/allepisode'
-    }
-  },
-  melolo: {
-    id: 'melolo',
-    name: 'Melolo',
-    description: 'Melodrama Collection',
-    icon: '💝',
-    color: 'from-rose-500 to-red-600',
-    endpoints: {
-      trending: '/trending',
-      latest: '/latest',
-      foryou: null, // Not available
-      search: '/search',
-      detail: '/detail',
-      allepisode: '/stream'
     }
   }
 } as const;
@@ -209,7 +194,12 @@ export async function getTrending(source: SourceType = 'dramabox'): Promise<Dram
     // NetShort has different response format
     if (source === 'netshort') {
       const transformed = transformNetShortData(data);
-      return transformed.map(d => ({ ...d, source }));
+      const result = transformed.map(d => ({ ...d, source }));
+      // Cache drama data for detail page
+      result.forEach(drama => {
+        localStorage.setItem(`drama_${source}_${drama.bookId}`, JSON.stringify(drama));
+      });
+      return result;
     }
     
     // Melolo has different response format
@@ -232,7 +222,12 @@ export async function getLatest(source: SourceType = 'dramabox'): Promise<Drama[
     // NetShort has different response format
     if (source === 'netshort') {
       const transformed = transformNetShortData(data);
-      return transformed.map(d => ({ ...d, source }));
+      const result = transformed.map(d => ({ ...d, source }));
+      // Cache drama data for detail page
+      result.forEach(drama => {
+        localStorage.setItem(`drama_${source}_${drama.bookId}`, JSON.stringify(drama));
+      });
+      return result;
     }
     
     // Melolo has different response format
@@ -255,7 +250,12 @@ export async function getForYou(source: SourceType = 'dramabox'): Promise<Drama[
     // NetShort has different response format
     if (source === 'netshort') {
       const transformed = transformNetShortData(data);
-      return transformed.map(d => ({ ...d, source }));
+      const result = transformed.map(d => ({ ...d, source }));
+      // Cache drama data for detail page
+      result.forEach(drama => {
+        localStorage.setItem(`drama_${source}_${drama.bookId}`, JSON.stringify(drama));
+      });
+      return result;
     }
     
     return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
@@ -317,9 +317,13 @@ export async function searchDrama(query: string, source: SourceType = 'dramabox'
 
 export async function getDramaDetail(bookId: string, source: SourceType = 'dramabox'): Promise<DramaDetail | null> {
   try {
-    // NetShort doesn't have detail endpoint, return null
+    // NetShort doesn't have detail endpoint, try to get from localStorage cache
     if (source === 'netshort') {
-      console.warn('NetShort does not have detail endpoint');
+      console.warn('NetShort does not have detail endpoint, using cached data');
+      const cached = localStorage.getItem(`drama_${source}_${bookId}`);
+      if (cached) {
+        return JSON.parse(cached);
+      }
       return null;
     }
     
