@@ -1,6 +1,6 @@
 /**
- * Drama Detail Page - Premium Streaming Experience
- * Design: Modern, Clean, Netflix-inspired
+ * Drama Detail Page - Corporate Edition
+ * Design: Executive Portfolio & Data-Driven Style
  */
 
 import { useState, useEffect } from "react";
@@ -8,7 +8,7 @@ import { useParams, Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, Bookmark, BookmarkCheck, Share2, ChevronDown, ChevronUp, 
-  Film, Star, ArrowLeft, Lock, Clock, Users
+  Film, Star, ArrowLeft, Lock, Clock, Users, Award, TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -44,7 +44,7 @@ export default function DramaDetail() {
         setEpisodes(episodesData);
       } catch (err) {
         console.error(err);
-        toast.error("Gagal memuat detail drama");
+        toast.error("Failed to load drama details");
       } finally {
         setLoading(false);
       }
@@ -59,7 +59,7 @@ export default function DramaDetail() {
       bookName: drama.bookName,
       coverWap: getCoverUrl(drama),
     });
-    toast(added ? "Ditambahkan ke daftar simpan" : "Dihapus dari daftar simpan");
+    toast(added ? "Added to library" : "Removed from library");
   };
 
   const handleShare = async () => {
@@ -72,7 +72,7 @@ export default function DramaDetail() {
       });
     } catch {
       navigator.clipboard.writeText(window.location.href);
-      toast("Link disalin ke clipboard");
+      toast("Link copied to clipboard");
     }
   };
 
@@ -84,309 +84,250 @@ export default function DramaDetail() {
 
   if (!drama) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center"
+          className="text-center max-w-md"
         >
-          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-secondary flex items-center justify-center">
-            <Film className="w-12 h-12 text-muted-foreground" />
+          <div className="w-20 h-20 mx-auto mb-6 rounded bg-muted flex items-center justify-center border border-border">
+            <Film className="w-10 h-10 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-display mb-2">Drama tidak ditemukan</h2>
-          <p className="text-muted-foreground mb-6">Drama yang kamu cari tidak tersedia</p>
-          <Button onClick={() => setLocation("/")}>Kembali ke Beranda</Button>
+          <h2 className="text-xl font-bold mb-2 tracking-tight">Content Not Found</h2>
+          <p className="text-muted-foreground mb-6 text-sm">The requested content is unavailable</p>
+          <Button onClick={() => setLocation("/")} variant="outline">Return to Home</Button>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-32 md:pb-24">
-      {/* Background */}
-      <div className="fixed inset-0 -z-10">
-        {!imageLoaded && <div className="absolute inset-0 skeleton" />}
-        <img
-          src={getCoverUrl(drama)}
-          alt=""
-          className={`w-full h-full object-cover transition-opacity duration-700 ${
-            imageLoaded ? "opacity-100" : "opacity-0"
-          }`}
-          onLoad={() => setImageLoaded(true)}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/95 to-background/70" />
-        <div className="absolute inset-0 backdrop-blur-2xl" />
+    <div className="min-h-screen pb-24">
+      {/* Back Button */}
+      <div className="container pt-6 pb-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setLocation("/")}
+          className="gap-2 hover:text-primary transition-corporate"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </Button>
       </div>
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 safe-top">
-        <div className="container py-4 flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="w-10 h-10 rounded-full bg-secondary/50 backdrop-blur-sm hover:bg-secondary"
-            onClick={() => window.history.back()}
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="w-10 h-10 rounded-full bg-secondary/50 backdrop-blur-sm hover:bg-secondary"
-              onClick={handleShare}
+      {/* Hero Section */}
+      <section className="relative">
+        <div className="container">
+          <div className="grid md:grid-cols-[300px,1fr] gap-8">
+            {/* Poster */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="relative aspect-[2/3] rounded-md overflow-hidden border border-border"
             >
-              <Share2 className="w-5 h-5" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="w-10 h-10 rounded-full bg-secondary/50 backdrop-blur-sm hover:bg-secondary"
-              onClick={handleBookmark}
-            >
-              {isBookmarked(drama.bookId) ? (
-                <BookmarkCheck className="w-5 h-5 text-primary" />
-              ) : (
-                <Bookmark className="w-5 h-5" />
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-gradient-to-br from-card to-muted animate-pulse" />
               )}
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="container">
-        {/* Poster and Info */}
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 pt-4">
-          {/* Poster */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex-shrink-0 mx-auto md:mx-0"
-          >
-            <div className="relative w-44 md:w-60 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl">
               <img
                 src={getCoverUrl(drama)}
                 alt={drama.bookName}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover transition-opacity duration-500 ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+                onLoad={() => setImageLoaded(true)}
               />
-              <div className="absolute inset-0 ring-1 ring-white/10 rounded-2xl" />
-              
-              {/* Play overlay on hover */}
-              <Link href={`/watch/${source}/${drama.bookId}/${lastWatched || 0}`}>
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
-                  <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center glow-primary">
-                    <Play className="w-8 h-8 text-white fill-white ml-1" />
+            </motion.div>
+
+            {/* Info */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex flex-col"
+            >
+              {/* Title */}
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 tracking-tight leading-tight">
+                {drama.bookName}
+              </h1>
+
+              {/* Meta Stats - Corporate Style */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                {drama.chapterCount && (
+                  <div className="p-3 rounded bg-muted border border-border">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Film className="w-4 h-4 text-primary" />
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Episodes</span>
+                    </div>
+                    <div className="text-foreground font-bold text-lg">{drama.chapterCount}</div>
                   </div>
-                </div>
-              </Link>
-            </div>
-          </motion.div>
-
-          {/* Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="flex-1 text-center md:text-left"
-          >
-            <h1 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground mb-4">
-              {drama.bookName}
-            </h1>
-
-            {/* Meta */}
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-muted-foreground mb-5">
-              {drama.chapterCount && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50">
-                  <Film className="w-4 h-4" />
-                  {drama.chapterCount} Episode
-                </div>
-              )}
-              {drama.rankVo && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-400">
-                  <Star className="w-4 h-4 fill-current" />
-                  {drama.rankVo.hotCode}
-                </div>
-              )}
-              {drama.playCount && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50">
-                  <Users className="w-4 h-4" />
-                  {drama.playCount}
-                </div>
-              )}
-            </div>
-
-            {/* Tags */}
-            {drama.tags && (
-              <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-6">
-                {drama.tags.map((tag) => (
-                  <span 
-                    key={tag}
-                    className="px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs font-medium"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Description */}
-            <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-8 max-w-2xl">
-              {drama.introduction}
-            </p>
-
-            {/* Desktop Actions */}
-            <div className="hidden md:flex gap-3">
-              <Link href={`/watch/${source}/${drama.bookId}/${lastWatched || 0}`}>
-                <Button size="lg" className="bg-primary hover:bg-primary/90 gap-2 glow-primary px-8">
-                  <Play className="w-5 h-5 fill-current" />
-                  {lastWatched > 0 ? "Lanjutkan" : "Tonton Sekarang"}
-                </Button>
-              </Link>
-              <Button 
-                size="lg" 
-                variant="secondary"
-                className="gap-2"
-                onClick={handleBookmark}
-              >
-                {isBookmarked(drama.bookId) ? (
-                  <>
-                    <BookmarkCheck className="w-5 h-5 text-primary" />
-                    Tersimpan
-                  </>
-                ) : (
-                  <>
-                    <Bookmark className="w-5 h-5" />
-                    Simpan
-                  </>
                 )}
-              </Button>
-            </div>
-          </motion.div>
+                {drama.rankVo?.hotCode && (
+                  <div className="p-3 rounded bg-accent/10 border border-accent/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Star className="w-4 h-4 text-accent fill-accent" />
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Rating</span>
+                    </div>
+                    <div className="text-accent font-bold text-lg">{drama.rankVo.hotCode}</div>
+                  </div>
+                )}
+                {drama.rankVo?.sort && (
+                  <div className="p-3 rounded bg-primary/10 border border-primary/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Rank</span>
+                    </div>
+                    <div className="text-primary font-bold text-lg">#{drama.rankVo.sort}</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Tags */}
+              {drama.tags && drama.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {drama.tags.map((tag) => (
+                    <span 
+                      key={tag} 
+                      className="px-3 py-1 rounded bg-secondary/10 text-secondary text-xs font-semibold uppercase tracking-wider border border-secondary/20"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Description */}
+              <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+                {drama.introduction}
+              </p>
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3">
+                <Link href={`/watch/${drama.bookId}/${lastWatched || 0}`}>
+                  <Button 
+                    size="lg" 
+                    className="bg-primary hover:bg-primary/90 text-white gap-2 btn-primary-glow transition-corporate px-8 font-bold"
+                  >
+                    <Play className="w-5 h-5 fill-current" />
+                    {lastWatched ? `RESUME EP ${lastWatched + 1}` : "WATCH NOW"}
+                  </Button>
+                </Link>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={handleBookmark}
+                  className={`gap-2 transition-corporate ${
+                    isBookmarked(drama.bookId) ? "border-primary text-primary" : ""
+                  }`}
+                >
+                  {isBookmarked(drama.bookId) ? (
+                    <BookmarkCheck className="w-5 h-5" />
+                  ) : (
+                    <Bookmark className="w-5 h-5" />
+                  )}
+                  {isBookmarked(drama.bookId) ? "Saved" : "Save"}
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="ghost"
+                  onClick={handleShare}
+                  className="gap-2 hover:text-primary transition-corporate"
+                >
+                  <Share2 className="w-5 h-5" />
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Episodes Section */}
+      <section className="container mt-12">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-primary" />
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Episode List</h2>
+          </div>
+          <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">
+            {episodes.length} EPISODES TOTAL
+          </div>
         </div>
 
-        {/* Episodes Section */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mt-12"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display text-2xl text-foreground flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
-              Daftar Episode
-            </h2>
-            <span className="px-3 py-1 rounded-full bg-secondary text-sm text-muted-foreground">
-              {episodes.length} Episode
-            </span>
-          </div>
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
+          {displayedEpisodes.map((episode, index) => (
+            <Link key={episode.chapterId} href={`/watch/${drama.bookId}/${index}`}>
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.01 }}
+                className={`w-full aspect-square rounded flex flex-col items-center justify-center text-sm font-bold transition-corporate ${
+                  lastWatched === index
+                    ? "bg-primary text-white btn-primary-glow"
+                    : "bg-muted text-foreground hover:bg-border hover:border-primary border border-transparent"
+                }`}
+              >
+                <span className="text-xs uppercase tracking-wider font-semibold opacity-70 mb-1">EP</span>
+                <span className="text-lg">{index + 1}</span>
+              </motion.button>
+            </Link>
+          ))}
+        </div>
 
-          {/* Episode Grid */}
-          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2">
-            <AnimatePresence>
-              {displayedEpisodes.map((episode, index) => (
-                <motion.div
-                  key={episode.chapterId}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.01 }}
-                >
-                  <Link href={`/watch/${source}/${drama.bookId}/${episode.chapterIndex}`}>
-                    <motion.button
-                      whileHover={{ scale: 1.08 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`episode-btn w-full aspect-square text-sm ${
-                        episode.chapterIndex === lastWatched ? "active" : ""
-                      }`}
-                    >
-                      {episode.chapterIndex + 1}
-                      {episode.isCharge === 1 && (
-                        <Lock className="absolute top-1 right-1 w-3 h-3 text-amber-500" />
-                      )}
-                    </motion.button>
-                  </Link>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-
-          {/* Show More */}
-          {episodes.length > 20 && (
+        {/* Show More Button */}
+        {episodes.length > 20 && (
+          <div className="mt-6 text-center">
             <Button
-              variant="ghost"
-              className="w-full mt-6 text-muted-foreground hover:text-foreground gap-2"
+              variant="outline"
               onClick={() => setEpisodesExpanded(!episodesExpanded)}
+              className="gap-2 transition-corporate"
             >
               {episodesExpanded ? (
                 <>
+                  Show Less
                   <ChevronUp className="w-4 h-4" />
-                  Tampilkan Lebih Sedikit
                 </>
               ) : (
                 <>
+                  Show All ({episodes.length} Episodes)
                   <ChevronDown className="w-4 h-4" />
-                  Tampilkan Semua ({episodes.length} Episode)
                 </>
               )}
             </Button>
-          )}
-        </motion.section>
-      </main>
-
-      {/* Mobile Sticky CTA */}
-      <div className="fixed bottom-20 left-0 right-0 p-4 md:hidden safe-bottom z-40">
-        <div className="glass-card rounded-2xl p-3">
-          <Link href={`/watch/${source}/${drama.bookId}/${lastWatched || 0}`}>
-            <Button className="w-full bg-primary hover:bg-primary/90 gap-2 h-14 text-lg glow-primary rounded-xl">
-              <Play className="w-6 h-6 fill-current" />
-              {lastWatched > 0 ? `Lanjutkan EP ${lastWatched + 1}` : "Tonton Sekarang"}
-            </Button>
-          </Link>
-        </div>
-      </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
 
+// Skeleton Loading State
 function DetailSkeleton() {
   return (
     <div className="min-h-screen pb-24">
-      <div className="fixed inset-0 -z-10 skeleton" />
-      <header className="container py-4">
-        <div className="w-10 h-10 rounded-full skeleton" />
-      </header>
-      <main className="container">
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12 pt-4">
-          <div className="w-44 md:w-60 aspect-[2/3] rounded-2xl skeleton mx-auto md:mx-0" />
-          <div className="flex-1 space-y-4">
-            <div className="h-12 w-3/4 skeleton rounded-xl mx-auto md:mx-0" />
-            <div className="flex gap-2 justify-center md:justify-start">
-              <div className="h-8 w-24 skeleton rounded-full" />
-              <div className="h-8 w-20 skeleton rounded-full" />
-            </div>
-            <div className="flex gap-2 justify-center md:justify-start flex-wrap">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-7 w-20 skeleton rounded-full" />
+      <div className="container pt-6 pb-4">
+        <div className="w-20 h-8 bg-muted rounded animate-pulse" />
+      </div>
+      <div className="container">
+        <div className="grid md:grid-cols-[300px,1fr] gap-8">
+          <div className="aspect-[2/3] rounded-md bg-gradient-to-br from-card to-muted animate-pulse" />
+          <div className="space-y-4">
+            <div className="h-10 bg-muted rounded animate-pulse w-3/4" />
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-20 bg-muted rounded animate-pulse" />
               ))}
             </div>
-            <div className="space-y-2 max-w-2xl">
-              <div className="h-4 w-full skeleton rounded" />
-              <div className="h-4 w-full skeleton rounded" />
-              <div className="h-4 w-2/3 skeleton rounded" />
+            <div className="flex gap-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-8 w-24 bg-muted rounded animate-pulse" />
+              ))}
+            </div>
+            <div className="space-y-2">
+              <div className="h-4 bg-muted rounded animate-pulse" />
+              <div className="h-4 bg-muted rounded animate-pulse w-5/6" />
             </div>
           </div>
         </div>
-        <div className="mt-12">
-          <div className="h-8 w-48 skeleton rounded-xl mb-6" />
-          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <div key={i} className="aspect-square skeleton rounded-xl" />
-            ))}
-          </div>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

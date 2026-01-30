@@ -1,14 +1,14 @@
 /**
- * Drama Card Component
- * Design: Premium Streaming Experience
+ * Drama Card Component - Corporate Edition
+ * Design: Executive Portfolio Style
  */
 
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { Play, Star, TrendingUp } from "lucide-react";
+import { Play, Star, TrendingUp, Award } from "lucide-react";
 import type { Drama } from "@/lib/api";
 import { getCoverUrl } from "@/lib/api";
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 interface DramaCardProps {
   drama: Drama;
@@ -21,16 +21,6 @@ interface DramaCardProps {
 
 export default function DramaCard({ drama, index = 0, size = "md", showRank = false }: DramaCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePosition({ x, y });
-  };
 
   const sizeClasses = {
     sm: "w-32 aspect-[2/3]",
@@ -42,22 +32,17 @@ export default function DramaCard({ drama, index = 0, size = "md", showRank = fa
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
+      transition={{ duration: 0.3, delay: index * 0.03 }}
     >
       <Link href={`/drama/${drama.source || 'dramabox'}/${drama.bookId}`}>
         <motion.div
-          ref={cardRef}
-          className={`relative ${sizeClasses[size]} rounded-2xl overflow-hidden cursor-pointer group card-hover`}
-          onMouseMove={handleMouseMove}
+          className={`relative ${sizeClasses[size]} rounded-md overflow-hidden cursor-pointer group transition-corporate`}
+          whileHover={{ y: -4 }}
           whileTap={{ scale: 0.98 }}
-          style={{
-            "--mouse-x": `${mousePosition.x}%`,
-            "--mouse-y": `${mousePosition.y}%`,
-          } as React.CSSProperties}
         >
           {/* Skeleton loader */}
           {!imageLoaded && (
-            <div className="absolute inset-0 skeleton" />
+            <div className="absolute inset-0 bg-gradient-to-br from-card to-muted animate-pulse" />
           )}
           
           {/* Cover image */}
@@ -66,7 +51,7 @@ export default function DramaCard({ drama, index = 0, size = "md", showRank = fa
             alt={drama.bookName}
             className={`w-full h-full object-cover transition-all duration-500 ${
               imageLoaded ? "opacity-100" : "opacity-0"
-            } group-hover:scale-110`}
+            } group-hover:scale-105`}
             loading="lazy"
             onLoad={() => setImageLoaded(true)}
             onError={(e) => {
@@ -75,83 +60,75 @@ export default function DramaCard({ drama, index = 0, size = "md", showRank = fa
             }}
           />
           
-          {/* Spotlight overlay */}
-          <div 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-            style={{
-              background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, oklch(1 0 0 / 0.2) 0%, transparent 50%)`,
-            }}
-          />
+          {/* Corporate gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity" />
           
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
-          
-          {/* Rank badge */}
+          {/* Rank badge - Top Left */}
           {showRank && drama.rankVo && (
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/90 backdrop-blur-sm">
-              <TrendingUp className="w-3.5 h-3.5 text-white" />
-              <span className="text-white text-xs font-bold">
+            <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded bg-primary/90 backdrop-blur-sm">
+              <TrendingUp className="w-3 h-3 text-white" />
+              <span className="text-white text-[10px] font-bold tracking-wide">
                 #{drama.rankVo.sort || 1}
               </span>
             </div>
           )}
           
-          {/* Corner badge */}
+          {/* Corner badge - Top Right */}
           {drama.corner && (
             <div 
-              className="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white backdrop-blur-sm"
+              className="absolute top-2 right-2 px-2 py-1 rounded text-[9px] font-bold text-white backdrop-blur-sm uppercase tracking-wider"
               style={{ backgroundColor: drama.corner.color }}
             >
               {drama.corner.name}
             </div>
           )}
           
-          {/* Episode count */}
+          {/* Episode count - Top Right (if no corner) */}
           {drama.chapterCount && !drama.corner && (
-            <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-sm text-white text-xs font-medium">
+            <div className="absolute top-2 right-2 px-2 py-1 rounded bg-muted/80 backdrop-blur-sm text-foreground text-[10px] font-semibold tracking-wide">
               {drama.chapterCount} EP
             </div>
           )}
           
-          {/* Play button on hover */}
+          {/* Play button on hover - Center */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.8 }}
               whileHover={{ scale: 1.1 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center glow-primary"
+              className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg"
+              style={{ boxShadow: '0 0 20px rgba(6, 182, 212, 0.5)' }}
             >
-              <Play className="w-7 h-7 text-white fill-white ml-1" />
+              <Play className="w-5 h-5 text-white fill-white ml-0.5" />
             </motion.div>
           </div>
           
-          {/* Content */}
-          <div className="absolute bottom-0 left-0 right-0 p-4">
+          {/* Content - Bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-3">
             {/* Rating */}
             {drama.rankVo?.hotCode && (
-              <div className="flex items-center gap-1 mb-2">
-                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                <span className="text-amber-400 text-xs font-semibold">
+              <div className="flex items-center gap-1 mb-1.5">
+                <Star className="w-3 h-3 text-accent fill-accent" />
+                <span className="text-accent text-[11px] font-bold tracking-wide">
                   {drama.rankVo.hotCode}
                 </span>
               </div>
             )}
             
             {/* Title */}
-            <h3 className="text-white text-sm font-semibold line-clamp-2 mb-1.5 group-hover:text-primary transition-colors">
+            <h3 className="text-foreground text-sm font-bold line-clamp-2 mb-1 group-hover:text-primary transition-colors tracking-tight">
               {drama.bookName}
             </h3>
             
             {/* Tags */}
             {drama.tags && drama.tags.length > 0 && (
-              <p className="text-white/60 text-[11px] line-clamp-1">
+              <p className="text-muted-foreground text-[10px] line-clamp-1 uppercase tracking-wider font-medium">
                 {drama.tags.slice(0, 2).join(" • ")}
               </p>
             )}
           </div>
           
-          {/* Border glow on hover */}
-          <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 group-hover:ring-primary/50 transition-all duration-300" />
+          {/* Border on hover */}
+          <div className="absolute inset-0 rounded-md border border-border group-hover:border-primary transition-all duration-300" />
         </motion.div>
       </Link>
     </motion.div>
@@ -167,8 +144,8 @@ export function DramaCardSkeleton({ size = "md" }: { size?: "sm" | "md" | "lg" }
   };
 
   return (
-    <div className={`${sizeClasses[size]} rounded-2xl overflow-hidden`}>
-      <div className="w-full h-full skeleton" />
+    <div className={`${sizeClasses[size]} rounded-md overflow-hidden border border-border`}>
+      <div className="w-full h-full bg-gradient-to-br from-card to-muted animate-pulse" />
     </div>
   );
 }
