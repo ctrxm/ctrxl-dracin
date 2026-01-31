@@ -4,7 +4,6 @@
  */
 
 import { motion } from "framer-motion";
-import { Film, Tv } from "lucide-react";
 import { SOURCES, type SourceType } from "@/lib/api";
 
 interface SourceTabsProps {
@@ -12,10 +11,10 @@ interface SourceTabsProps {
   onSourceChange: (source: SourceType) => void;
 }
 
-// Icon mapping for each source
-const sourceIcons: Record<SourceType, React.ElementType> = {
-  dramabox: Film,
-  netshort: Tv,
+// Image mapping for each source
+const sourceImages: Record<SourceType, string> = {
+  dramabox: "/assets/dramabox-logo.jpg",
+  netshort: "/assets/netshort-logo.jpg",
 };
 
 // Color mapping for each source
@@ -33,8 +32,7 @@ export default function SourceTabs({ activeSource, onSourceChange }: SourceTabsP
       <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4">
         {sources.map((source) => {
           const isActive = activeSource === source.id;
-          const Icon = sourceIcons[source.id as SourceType];
-          const iconColor = sourceColors[source.id as SourceType];
+          const imageUrl = sourceImages[source.id as SourceType];
           
           return (
             <motion.button
@@ -58,7 +56,11 @@ export default function SourceTabs({ activeSource, onSourceChange }: SourceTabsP
               
               {/* Content */}
               <span className="relative flex items-center gap-2">
-                <Icon className={`w-4 h-4 ${isActive ? "text-white" : iconColor}`} />
+                <img 
+                  src={imageUrl} 
+                  alt={source.name}
+                  className="w-5 h-5 rounded object-cover"
+                />
                 <span className="hidden sm:inline">{source.name}</span>
               </span>
             </motion.button>
