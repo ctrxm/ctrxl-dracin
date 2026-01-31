@@ -24,6 +24,8 @@ import Analytics from "./pages/admin/Analytics";
 import AdminSettings from "./pages/admin/Settings";
 
 import BottomNav from "./components/BottomNav";
+import MaintenanceGuard from "./components/MaintenanceGuard";
+import PopupDisplay from "./components/PopupDisplay";
 import { AdminProvider } from "./contexts/AdminContext";
 import { useEffect } from "react";
 import { startVersionCheck } from "./lib/version-checker";
@@ -84,10 +86,13 @@ function App() {
               },
             }}
           />
-          <div className="min-h-screen bg-background film-grain">
-            <Router />
-            <BottomNav />
-          </div>
+          <MaintenanceGuard>
+            <div className="min-h-screen bg-background film-grain">
+              <Router />
+              <BottomNav />
+            </div>
+          </MaintenanceGuard>
+          <PopupDisplay />
         </TooltipProvider>
         </ThemeProvider>
       </AdminProvider>
