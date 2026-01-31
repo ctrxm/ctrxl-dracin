@@ -9,23 +9,33 @@ import { Link } from "wouter";
 import { Bookmark, Clock, Play, Trash2, X, Heart, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useBookmarks, useWatchHistory } from "@/hooks/useLocalStorage";
+import { useSupabaseBookmarks } from "@/hooks/useSupabaseBookmarks";
+import { useSupabaseWatchHistory } from "@/hooks/useSupabaseWatchHistory";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export default function Bookmarks() {
-  const { bookmarks, removeBookmark } = useBookmarks();
-  const { getContinueWatching, history, clearHistory } = useWatchHistory();
+  const { user } = useAuth();
+  const { bookmarks, removeBookmark: removeSupabaseBookmark, loading: bookmarksLoading } = useSupabaseBookmarks();
+  const { history, getContinueWatching, clearHistory, loading: historyLoading } = useSupabaseWatchHistory();
   const continueWatching = getContinueWatching();
   const [activeTab, setActiveTab] = useState("bookmarks");
 
-  const handleRemoveBookmark = (bookId: string, bookName: string) => {
-    removeBookmark(bookId);
-    toast(`${bookName} dihapus dari daftar simpan`);
+  const handleRemoveBookmark = async (dramaSource: string, dramaId: string, bookName: string) => {
+    if (!user) {
+      toast.error('Please login to manage bookmarks');
+      return;
+    }
+    await removeSupabaseBookmark(dramaSource, dramaId);
   };
 
-  const handleClearHistory = () => {
-    clearHistory();
-    toast("Riwayat tontonan dihapus");
+  const handleClearHistory = async () => {
+    if (!user) {
+      toast.error('Please login to manage history');
+      return;
+    }
+    await clearHistory();
+    toast.success("Riwayat tontonan dihapus");
   };
 
   return (
@@ -72,18 +82,18 @@ export default function Bookmarks() {
                 <AnimatePresence>
                   {bookmarks.map((drama, index) => (
                     <motion.div
-                      key={drama.bookId}
+                      key={drama.id}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ delay: index * 0.05 }}
                       className="relative group"
                     >
-                      <Link href={`/drama/${drama.bookId}`}>
+                      <Link href={`/drama/${drama.drama_source}/${drama.drama_id}`}>
                         <div className="relative aspect-[2/3] rounded-2xl overflow-hidden card-hover">
                           <img
-                            src={drama.coverWap}
-                            alt={drama.bookName}
+                            src={drama.drama_image || '/placeholder.jpg'}
+                            alt={drama.drama_title}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
@@ -97,7 +107,7 @@ export default function Bookmarks() {
                           
                           <div className="absolute bottom-0 left-0 right-0 p-4">
                             <h3 className="text-white font-semibold line-clamp-2 text-sm">
-                              {drama.bookName}
+                              {drama.drama_title}
                             </h3>
                           </div>
                           
@@ -113,7 +123,7 @@ export default function Bookmarks() {
                         className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500"
                         onClick={(e) => {
                           e.preventDefault();
-                          handleRemoveBookmark(drama.bookId, drama.bookName);
+                          handleRemoveBookmark(drama.drama_source, drama.drama_id, drama.drama_title);
                         }}
                       >
                         <X className="w-4 h-4" />
@@ -158,24 +168,24 @@ export default function Bookmarks() {
                     <div className="space-y-3">
                       {continueWatching.map((item, index) => (
                         <motion.div
-                          key={`${item.bookId}-${item.episodeIndex}`}
+                          key={item.id}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05 }}
                         >
-                          <Link href={`/watch/${item.bookId}/${item.episodeIndex}`}>
+                          <Link href={`/watch/${item.drama_source}/${item.drama_id}/${item.episode}`}>
                             <div className="flex gap-4 p-4 rounded-2xl bg-secondary/50 hover:bg-secondary transition-all group">
                               <div className="relative w-28 aspect-video rounded-xl overflow-hidden flex-shrink-0">
                                 <img
-                                  src={item.coverWap}
-                                  alt={item.bookName}
+                                  src={item.drama_image || '/placeholder.jpg'}
+                                  alt={item.drama_title}
                                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
                                 {/* Progress bar */}
                                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
                                   <div 
                                     className="h-full bg-primary"
-                                    style={{ width: `${item.progress}%` }}
+                                    style={{ width: `${(item.progress / item.duration) * 100}%` }}
                                   />
                                 </div>
                                 {/* Play icon */}
@@ -185,7 +195,7 @@ export default function Bookmarks() {
                               </div>
                               <div className="flex-1 min-w-0 py-1">
                                 <h3 className="text-foreground font-semibold line-clamp-1 mb-1">
-                                  {item.bookName}
+                                  {item.drama_title}
                                 </h3>
                                 <p className="text-muted-foreground text-sm mb-2">
                                   {item.episodeName}

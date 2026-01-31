@@ -23,7 +23,8 @@ import {
   getDramaDetail, getAllEpisodes, getVideoUrl,
   type DramaDetail, type Episode 
 } from "@/lib/api";
-import { useWatchHistory, useLastWatchedEpisode, useVideoProgress } from "@/hooks/useLocalStorage";
+import { useSupabaseWatchHistory } from "@/hooks/useSupabaseWatchHistory";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export default function Watch() {
@@ -54,9 +55,10 @@ export default function Watch() {
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
-  const { updateHistory } = useWatchHistory();
-  const [, setLastWatched] = useLastWatchedEpisode(id || "");
-  const [savedProgress, setSavedProgress] = useVideoProgress(id || "", episodeIndex);
+  const { user } = useAuth();
+  const { updateWatchHistory, getEpisodeProgress } = useSupabaseWatchHistory();
+  const savedProgressData = getEpisodeProgress(source || 'dramacool', id || '', episodeIndex || '0');
+  const [savedProgress, setSavedProgress] = useState(savedProgressData?.progress || 0);
 
   // Fetch drama and episodes
   useEffect(() => {
@@ -109,29 +111,27 @@ export default function Watch() {
     };
   }, []);
 
-  // Update last watched
-  useEffect(() => {
-    if (id && currentEpisode) {
-      setLastWatched(episodeIndex);
-    }
-  }, [id, episodeIndex, currentEpisode, setLastWatched]);
+  // Update last watched - handled by updateWatchHistory
 
   // Throttled progress save - only save every 5 seconds
-  const saveProgress = useCallback(() => {
-    if (!drama || !currentEpisode || durationRef.current === 0) return;
+  const saveProgress = useCallback(async () => {
+    if (!drama || !currentEpisode || durationRef.current === 0 || !user) return;
     
-    const progress = Math.round((currentTimeRef.current / durationRef.current) * 100);
-    setSavedProgress(progress);
+    const currentTime = Math.round(currentTimeRef.current);
+    const duration = Math.round(durationRef.current);
     
-    updateHistory({
-      bookId: drama.bookId,
-      bookName: drama.bookName,
-      coverWap: drama.coverWap || "",
+    setSavedProgress(currentTime);
+    
+    await updateWatchHistory(
+      source as 'dramacool' | 'kissasian',
+      drama.bookId,
+      drama.bookName,
       episodeIndex,
-      episodeName: currentEpisode.chapterName,
-      progress,
-    });
-  }, [drama, currentEpisode, episodeIndex, updateHistory, setSavedProgress]);
+      currentTime,
+      duration,
+      drama.coverWap || undefined
+    );
+  }, [drama, currentEpisode, episodeIndex, source, user, updateWatchHistory]);
 
   // Debounced progress save
   useEffect(() => {

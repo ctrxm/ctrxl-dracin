@@ -1,51 +1,43 @@
 /**
  * Admin Context - Authentication and Authorization
+ * Now uses Supabase AuthContext for role-based access
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 
 interface AdminContextType {
   isAdmin: boolean;
   isAuthenticated: boolean;
-  login: (password: string) => boolean;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-// Simple password-based auth (can be upgraded to JWT later)
-const ADMIN_PASSWORD = 'admin123'; // TODO: Move to env variable
-const ADMIN_TOKEN_KEY = 'admin_token';
-
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, profile, signIn, signOut } = useAuth();
 
-  useEffect(() => {
-    // Check if admin is already logged in
-    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
-    if (token === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-    }
-  }, []);
+  const isAdmin = profile?.role === 'admin';
+  const isAuthenticated = !!user && isAdmin;
 
-  const login = (password: string): boolean => {
-    if (password === ADMIN_PASSWORD) {
-      localStorage.setItem(ADMIN_TOKEN_KEY, password);
-      setIsAuthenticated(true);
-      return true;
-    }
-    return false;
+  const login = async (email: string, password: string): Promise<boolean> => {
+    const { error } = await signIn(email, password);
+    if (error) return false;
+    
+    // Check if user is admin after login
+    // Profile will be fetched automatically by AuthContext
+    return true;
   };
 
-  const logout = () => {
-    localStorage.removeItem(ADMIN_TOKEN_KEY);
-    setIsAuthenticated(false);
+  const logout = async () => {
+    await signOut();
   };
 
   return (
     <AdminContext.Provider
       value={{
-        isAdmin: isAuthenticated,
+        isAdmin,
         isAuthenticated,
         login,
         logout,

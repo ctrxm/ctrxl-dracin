@@ -22,7 +22,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import Dashboard from "./pages/admin/Dashboard";
 import PopupManager from "./pages/admin/PopupManager";
 import MaintenanceMode from "./pages/admin/MaintenanceMode";
-import Analytics from "./pages/admin/Analytics";
+import Analytics from "./pages/admin/AnalyticsDashboard";
 import AdminSettings from "./pages/admin/Settings";
 import AdminUsers from "./pages/admin/Users";
 

@@ -15,7 +15,9 @@ import {
   getDramaDetail, getAllEpisodes, getCoverUrl,
   type DramaDetail as DramaDetailType, type Episode 
 } from "@/lib/api";
-import { useBookmarks, useLastWatchedEpisode } from "@/hooks/useLocalStorage";
+import { useSupabaseBookmarks } from "@/hooks/useSupabaseBookmarks";
+import { useSupabaseWatchHistory } from "@/hooks/useSupabaseWatchHistory";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export default function DramaDetail() {
@@ -27,8 +29,11 @@ export default function DramaDetail() {
   const [episodesExpanded, setEpisodesExpanded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   
-  const { isBookmarked, toggleBookmark } = useBookmarks();
-  const [lastWatched] = useLastWatchedEpisode(id || "");
+  const { user } = useAuth();
+  const { isBookmarked, toggleBookmark } = useSupabaseBookmarks();
+  const { getContinueWatching } = useSupabaseWatchHistory();
+  const continueWatching = getContinueWatching();
+  const lastWatched = continueWatching.find(w => w.drama_id === id)?.episode;
 
   useEffect(() => {
     async function fetchData() {
@@ -52,14 +57,18 @@ export default function DramaDetail() {
     fetchData();
   }, [id]);
 
-  const handleBookmark = () => {
+  const handleBookmark = async () => {
     if (!drama) return;
-    const added = toggleBookmark({
-      bookId: drama.bookId,
-      bookName: drama.bookName,
-      coverWap: getCoverUrl(drama),
-    });
-    toast(added ? "Added to library" : "Removed from library");
+    if (!user) {
+      toast.error('Please login to bookmark dramas');
+      return;
+    }
+    await toggleBookmark(
+      source as 'dramacool' | 'kissasian',
+      drama.bookId,
+      drama.bookName,
+      getCoverUrl(drama)
+    );
   };
 
   const handleShare = async () => {
@@ -216,15 +225,15 @@ export default function DramaDetail() {
                   variant="outline"
                   onClick={handleBookmark}
                   className={`gap-2 transition-corporate ${
-                    isBookmarked(drama.bookId) ? "border-primary text-primary" : ""
+                    isBookmarked(source || 'dramacool', drama.bookId) ? "border-primary text-primary" : ""
                   }`}
                 >
-                  {isBookmarked(drama.bookId) ? (
+                  {isBookmarked(source || 'dramacool', drama.bookId) ? (
                     <BookmarkCheck className="w-5 h-5" />
                   ) : (
                     <Bookmark className="w-5 h-5" />
                   )}
-                  {isBookmarked(drama.bookId) ? "Saved" : "Save"}
+                  {isBookmarked(source || 'dramacool', drama.bookId) ? "Saved" : "Save"}
                 </Button>
                 <Button 
                   size="lg" 
