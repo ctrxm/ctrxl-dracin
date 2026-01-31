@@ -94,6 +94,8 @@ export function useAdminSettings() {
           settingsObj.maintenanceMode = item.value;
         } else if (item.key === 'popups') {
           settingsObj.popups = item.value;
+        } else if (item.key === 'ads') {
+          settingsObj.ads = item.value;
         } else if (item.key === 'featured_dramas') {
           settingsObj.featuredDramas = item.value;
         } else if (item.key === 'analytics') {
