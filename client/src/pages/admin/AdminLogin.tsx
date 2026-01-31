@@ -29,16 +29,16 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0A1628] via-[#0F1E35] to-[#0A1628] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0A1628] via-[#0F1E35] to-[#0A1628] p-4 sm:p-6">
       <Card className="w-full max-w-md border-cyan-500/20 bg-[#0A1628]/80 backdrop-blur-xl">
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
-            <Shield className="w-8 h-8 text-white" />
+        <CardHeader className="text-center space-y-3 sm:space-y-4">
+          <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
+            <Shield className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+          <CardTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
             Admin Access
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-sm sm:text-base text-gray-400">
             Enter your password to access the admin panel
           </CardDescription>
         </CardHeader>
@@ -59,7 +59,7 @@ export default function AdminLogin() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white font-semibold"
+              className="w-full h-11 sm:h-10 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 active:from-cyan-700 active:to-purple-800 text-white font-semibold touch-manipulation"
             >
               Login
             </Button>
