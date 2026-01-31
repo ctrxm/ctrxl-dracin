@@ -16,8 +16,15 @@ import DramaDetail from "./pages/DramaDetail";
 import Watch from "./pages/Watch";
 import Search from "./pages/Search";
 import Bookmarks from "./pages/Bookmarks";
+import AdminLogin from "./pages/admin/AdminLogin";
+import Dashboard from "./pages/admin/Dashboard";
+import PopupManager from "./pages/admin/PopupManager";
+import MaintenanceMode from "./pages/admin/MaintenanceMode";
+import Analytics from "./pages/admin/Analytics";
+import AdminSettings from "./pages/admin/Settings";
 
 import BottomNav from "./components/BottomNav";
+import { AdminProvider } from "./contexts/AdminContext";
 import { useEffect } from "react";
 import { startVersionCheck } from "./lib/version-checker";
 import { toast } from "sonner";
@@ -30,6 +37,14 @@ function Router() {
       <Route path="/watch/:source/:id/:episode?" component={Watch} />
       <Route path="/search" component={Search} />
       <Route path="/bookmarks" component={Bookmarks} />
+
+      {/* Admin Routes */}
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/dashboard" component={Dashboard} />
+      <Route path="/admin/popups" component={PopupManager} />
+      <Route path="/admin/maintenance" component={MaintenanceMode} />
+      <Route path="/admin/analytics" component={Analytics} />
+      <Route path="/admin/settings" component={AdminSettings} />
 
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
@@ -55,7 +70,8 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark">
+      <AdminProvider>
+        <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster 
             position="top-center"
@@ -73,7 +89,8 @@ function App() {
             <BottomNav />
           </div>
         </TooltipProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </AdminProvider>
     </ErrorBoundary>
   );
 }
