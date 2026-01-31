@@ -41,8 +41,8 @@ export default function AdManager() {
     type: 'image',
     placement: 'top',
     enabled: true,
-    priority: 1,
-    pages: ['home'],
+    priority: 5,
+    pages: [], // Empty = show on all pages
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -98,8 +98,8 @@ export default function AdManager() {
       type: 'image',
       placement: 'top',
       enabled: true,
-      priority: 1,
-      pages: ['home'],
+      priority: 5,
+      pages: [], // Empty = show on all pages
     });
     setIsCreating(false);
   };
@@ -336,6 +336,7 @@ export default function AdManager() {
                 {/* Pages Selection */}
                 <div className="space-y-2">
                   <Label className="text-gray-300">Show on Pages</Label>
+                  <p className="text-xs text-gray-500">Leave all unchecked to show on all pages</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {AD_PAGES.map((page) => (
                       <div key={page.value} className="flex items-center space-x-2">
@@ -417,8 +418,8 @@ export default function AdManager() {
                         type: 'image',
                         placement: 'top',
                         enabled: true,
-                        priority: 1,
-                        pages: ['home'],
+                        priority: 5,
+                        pages: [], // Empty = show on all pages
                       });
                     }}
                     className="w-full sm:w-auto border-cyan-500/30 text-white hover:bg-white/5 active:bg-white/10 touch-manipulation"

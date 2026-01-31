@@ -40,9 +40,13 @@ export default function AdDisplay({ placement, className = '' }: AdDisplayProps)
       if (ad.placement !== placement) return false;
 
       // Check if ad should show on current page
-      if (ad.pages && ad.pages.length > 0 && !ad.pages.includes(currentPage)) {
-        return false;
+      // If pages array is empty or undefined, show on all pages
+      if (ad.pages && ad.pages.length > 0) {
+        if (!ad.pages.includes(currentPage)) {
+          return false;
+        }
       }
+      // If pages is undefined or empty array, show on all pages (no filter)
 
       // Check start date
       if (ad.startDate) {
