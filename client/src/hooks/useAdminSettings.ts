@@ -8,6 +8,22 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+export interface AdConfig {
+  id: string;
+  name: string;
+  type: 'html' | 'image' | 'text';
+  placement: 'top' | 'bottom' | 'sidebar' | 'inline';
+  enabled: boolean;
+  priority: number;
+  htmlCode?: string;
+  imageUrl?: string;
+  linkUrl?: string;
+  textContent?: string;
+  startDate?: string;
+  endDate?: string;
+  pages?: string[]; // ['home', 'detail', 'watch', 'browse', 'bookmarks']
+}
+
 export interface PopupConfig {
   id: string;
   title: string;
@@ -31,6 +47,7 @@ export interface MaintenanceConfig {
 export interface AppSettings {
   maintenanceMode: MaintenanceConfig;
   popups: PopupConfig[];
+  ads: AdConfig[];
   featuredDramas: string[];
   analytics: {
     totalViews: number;
@@ -46,6 +63,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     message: 'We are currently performing scheduled maintenance. Please check back soon!',
   },
   popups: [],
+  ads: [],
   featuredDramas: [],
   analytics: {
     totalViews: 0,
@@ -198,6 +216,40 @@ export function useAdminSettings() {
     }
   };
 
+  // Add ad
+  const addAd = async (ad: AdConfig) => {
+    const newAds = [...settings.ads, ad];
+    const success = await saveSettings('ads', newAds);
+    
+    if (success) {
+      setSettings({ ...settings, ads: newAds });
+      toast.success('Ad added');
+    }
+  };
+
+  // Update ad
+  const updateAd = async (id: string, updates: Partial<AdConfig>) => {
+    const newAds = settings.ads.map((a) =>
+      a.id === id ? { ...a, ...updates } : a
+    );
+    const success = await saveSettings('ads', newAds);
+    
+    if (success) {
+      setSettings({ ...settings, ads: newAds });
+    }
+  };
+
+  // Delete ad
+  const deleteAd = async (id: string) => {
+    const newAds = settings.ads.filter((a) => a.id !== id);
+    const success = await saveSettings('ads', newAds);
+    
+    if (success) {
+      setSettings({ ...settings, ads: newAds });
+      toast.success('Ad deleted');
+    }
+  };
+
   // Subscribe to real-time changes
   useEffect(() => {
     fetchSettings();
@@ -231,6 +283,9 @@ export function useAdminSettings() {
     addPopup,
     updatePopup,
     deletePopup,
+    addAd,
+    updateAd,
+    deleteAd,
     updateAnalytics,
     refreshSettings: fetchSettings,
   };

@@ -11,6 +11,7 @@ import {
   Film, Star, ArrowLeft, Lock, Clock, Users, Award, TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TopBanner, SidebarAd } from "@/components/AdDisplay";
 import { 
   getDramaDetail, getAllEpisodes, getCoverUrl,
   type DramaDetail as DramaDetailType, type Episode 
@@ -125,10 +126,15 @@ export default function DramaDetail() {
         </Button>
       </div>
 
+      {/* Top Banner Ad */}
+      <div className="container mb-6">
+        <TopBanner />
+      </div>
+
       {/* Hero Section */}
       <section className="relative">
         <div className="container">
-          <div className="grid md:grid-cols-[300px,1fr] gap-8">
+          <div className="grid md:grid-cols-[300px,1fr] lg:grid-cols-[300px,1fr,250px] gap-8">
             {/* Poster */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -245,6 +251,11 @@ export default function DramaDetail() {
                 </Button>
               </div>
             </motion.div>
+
+            {/* Sidebar Ad - Desktop only */}
+            <div className="hidden lg:block">
+              <SidebarAd />
+            </div>
           </div>
         </div>
       </section>

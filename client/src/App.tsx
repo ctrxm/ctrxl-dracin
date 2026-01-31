@@ -25,6 +25,7 @@ import MaintenanceMode from "./pages/admin/MaintenanceMode";
 import Analytics from "./pages/admin/AnalyticsDashboard";
 import AdminSettings from "./pages/admin/Settings";
 import AdminUsers from "./pages/admin/Users";
+import AdManager from "./pages/admin/AdManager";
 
 import BottomNav from "./components/BottomNav";
 import MaintenanceGuard from "./components/MaintenanceGuard";
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/admin/dashboard" component={Dashboard} />
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/popups" component={PopupManager} />
+      <Route path="/admin/ads" component={AdManager} />
       <Route path="/admin/maintenance" component={MaintenanceMode} />
       <Route path="/admin/analytics" component={Analytics} />
       <Route path="/admin/settings" component={AdminSettings} />

@@ -10,6 +10,7 @@ import { Play, ChevronRight, Bookmark, BookmarkCheck, Info, Star, TrendingUp, Cl
 import { Button } from "@/components/ui/button";
 import DramaCard, { DramaCardSkeleton } from "@/components/DramaCard";
 import SourceTabs from "@/components/SourceTabs";
+import { TopBanner, InlineAd } from "@/components/AdDisplay";
 import { getTrending, getLatest, getForYou, getCoverUrl, type Drama, type SourceType } from "@/lib/api";
 import { useBookmarks, useWatchHistory } from "@/hooks/useLocalStorage";
 import { toast } from "sonner";
@@ -255,8 +256,13 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Top Banner Ad */}
+      <div className="container mt-8">
+        <TopBanner />
+      </div>
+
       {/* Source Tabs */}
-      <div className="container mt-8 mb-6">
+      <div className="container mt-6 mb-6">
         <SourceTabs activeSource={activeSource} onSourceChange={handleSourceChange} />
       </div>
 
@@ -328,6 +334,11 @@ export default function Home() {
           </div>
         )}
       </Section>
+
+      {/* Inline Ad */}
+      <div className="container">
+        <InlineAd />
+      </div>
 
       {/* Latest Section */}
       <Section 

@@ -19,6 +19,7 @@ import {
   Volume2, VolumeX, Maximize
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TopBanner, BottomBanner } from "@/components/AdDisplay";
 import { 
   getDramaDetail, getAllEpisodes, getVideoUrl,
   type DramaDetail, type Episode 
@@ -310,6 +311,20 @@ export default function Watch() {
       onMouseMove={resetControlsTimeout}
       onTouchStart={resetControlsTimeout}
     >
+      {/* Top Banner Ad - Shows when controls visible */}
+      <AnimatePresence>
+        {showControls && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-4 left-4 right-4 z-40"
+          >
+            <TopBanner className="max-w-4xl mx-auto" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Video Player - Optimized */}
       <video
         ref={videoRef}
