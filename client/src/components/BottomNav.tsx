@@ -3,10 +3,11 @@
  * Design: Minimalist Executive Interface
  */
 
-import { Home, Search, Bookmark, Play } from "lucide-react";
+import { Home, Search, Bookmark, Play, User, LogIn } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { useWatchHistory } from "@/hooks/useLocalStorage";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
@@ -18,6 +19,7 @@ export default function BottomNav() {
   const [location] = useLocation();
   const { getContinueWatching } = useWatchHistory();
   const continueWatching = getContinueWatching();
+  const { user } = useAuth();
 
   // Hide on watch page
   if (location.startsWith("/watch")) {
@@ -70,8 +72,50 @@ export default function BottomNav() {
             );
           })}
           
+          {/* User menu */}
+          <Link href={user ? "/profile" : "/login"}>
+            <motion.div
+              className="relative flex flex-col items-center justify-center w-16 py-2 cursor-pointer"
+              whileTap={{ scale: 0.95 }}
+            >
+              {location === "/profile" && (
+                <motion.div
+                  layoutId="nav-indicator"
+                  className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+              
+              {user ? (
+                <User 
+                  className={`w-5 h-5 transition-corporate ${
+                    location === "/profile" 
+                      ? "text-primary" 
+                      : "text-muted-foreground"
+                  }`}
+                  strokeWidth={location === "/profile" ? 2.5 : 2}
+                />
+              ) : (
+                <LogIn 
+                  className={`w-5 h-5 transition-corporate ${
+                    location === "/login" 
+                      ? "text-primary" 
+                      : "text-muted-foreground"
+                  }`}
+                  strokeWidth={location === "/login" ? 2.5 : 2}
+                />
+              )}
+              
+              <span className={`text-[10px] mt-1 font-semibold uppercase tracking-wider transition-corporate ${
+                location === "/profile" || location === "/login" ? "text-primary" : "text-muted-foreground"
+              }`}>
+                {user ? "Profile" : "Login"}
+              </span>
+            </motion.div>
+          </Link>
+          
           {/* Continue watching quick access */}
-          {continueWatching.length > 0 && (
+          {continueWatching.length > 0 && user && (
             <Link href={`/watch/${continueWatching[0].bookId}/${continueWatching[0].episodeIndex}`}>
               <motion.div
                 className="relative flex flex-col items-center justify-center w-16 py-2 cursor-pointer"

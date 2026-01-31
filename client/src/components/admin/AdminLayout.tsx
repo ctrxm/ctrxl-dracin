@@ -15,7 +15,8 @@ import {
   LogOut,
   Shield,
   Menu,
-  X
+  X,
+  Users
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -24,6 +25,7 @@ interface AdminLayoutProps {
 
 const navItems = [
   { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/popups', label: 'Pop-ups', icon: MessageSquare },
   { path: '/admin/maintenance', label: 'Maintenance', icon: Wrench },
   { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
