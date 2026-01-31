@@ -168,6 +168,18 @@ export default function PopupManager() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="imageUrl" className="text-gray-300">Image URL (optional)</Label>
+                  <Input
+                    id="imageUrl"
+                    value={formData.imageUrl}
+                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                    className="bg-[#0A1628] border-cyan-500/30 text-white"
+                    placeholder="https://... or /promo-banner.png"
+                  />
+                  <p className="text-xs text-gray-500">Enter image URL or path to display banner in pop-up</p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="buttonText" className="text-gray-300">Button Text</Label>
