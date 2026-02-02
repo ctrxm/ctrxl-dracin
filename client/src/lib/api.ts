@@ -6,6 +6,8 @@
  * With graceful fallback for missing endpoints
  */
 
+import { decryptData } from "./crypto";
+
 const API_BASE = "https://api.sansekai.my.id/api";
 
 // Available sources
@@ -163,7 +165,21 @@ async function fetchWithCache<T>(url: string, source?: string): Promise<T> {
     throw new Error(`API Error: ${response.status}`);
   }
   
-  const data = await response.json();
+  const json = await response.json();
+  
+  // Handle encrypted responses from SANSEKAI API
+  let data: T;
+  if (json.data && typeof json.data === "string") {
+    try {
+      data = decryptData<T>(json.data);
+    } catch (error) {
+      console.error("Failed to decrypt data:", error);
+      data = json as T;
+    }
+  } else {
+    data = json as T;
+  }
+  
   cache.set(url, { data, timestamp: Date.now() });
   return data;
 }
