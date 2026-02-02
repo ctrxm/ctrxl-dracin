@@ -522,3 +522,8 @@ export async function getAllEpisodes(bookId: string, source: SourceType = 'drama
     return [];
   }
 }
+
+// Helper function to get cover URL with fallback
+export function getCoverUrl(drama: Drama): string {
+  return drama.coverWap || drama.cover || '/placeholder-drama.jpg';
+}
