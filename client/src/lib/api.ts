@@ -527,3 +527,18 @@ export async function getAllEpisodes(bookId: string, source: SourceType = 'drama
 export function getCoverUrl(drama: Drama): string {
   return drama.coverWap || drama.cover || '/placeholder-drama.jpg';
 }
+
+// Helper function to get video URL from episode
+export function getVideoUrl(episode: Episode): string {
+  if (!episode.cdnList || episode.cdnList.length === 0) {
+    return '';
+  }
+  
+  const cdn = episode.cdnList.find(c => c.isDefault === 1) || episode.cdnList[0];
+  if (!cdn.videoPathList || cdn.videoPathList.length === 0) {
+    return '';
+  }
+  
+  const video = cdn.videoPathList.find(v => v.isDefault === 1) || cdn.videoPathList[0];
+  return `${cdn.cdnDomain}${video.videoPath}`;
+}
