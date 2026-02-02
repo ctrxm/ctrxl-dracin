@@ -2,14 +2,14 @@
  * CTRXL DRACIN API Service
  * Design: Neo-Noir Cinema
  * 
- * Multi-Source Support: DramaBox, NetShort
+ * Multi-Source Support: DramaBox, NetShort, ReelShort, Melolo, FlickReels, FreeReels
  * With graceful fallback for missing endpoints
  */
 
 const API_BASE = "https://api.sansekai.my.id/api";
 
 // Available sources
-export type SourceType = 'dramabox' | 'netshort';
+export type SourceType = 'dramabox' | 'netshort' | 'reelshort' | 'melolo' | 'flickreels' | 'freereels';
 
 export const SOURCES = {
   dramabox: {
@@ -35,12 +35,76 @@ export const SOURCES = {
     icon: '📺',
     color: 'from-blue-500 to-cyan-600',
     endpoints: {
-      trending: '/theaters', // NetShort uses theaters for trending
-      latest: '/foryou', // NetShort uses foryou for latest
+      trending: '/theaters',
+      latest: '/foryou',
       foryou: '/foryou',
       search: '/search',
-      detail: null, // Not available in API
+      detail: null,
       allepisode: '/allepisode'
+    }
+  },
+
+  reelshort: {
+    id: 'reelshort',
+    name: 'ReelShort',
+    description: 'Short Drama Reels',
+    icon: '🎥',
+    color: 'from-pink-500 to-rose-600',
+    endpoints: {
+      trending: '/homepage',
+      latest: '/homepage',
+      foryou: '/homepage',
+      search: '/search',
+      detail: '/detail',
+      allepisode: null
+    }
+  },
+
+  melolo: {
+    id: 'melolo',
+    name: 'Melolo',
+    description: 'Melodrama Collection',
+    icon: '🎭',
+    color: 'from-purple-500 to-indigo-600',
+    endpoints: {
+      trending: '/latest',
+      latest: '/latest',
+      foryou: '/latest',
+      search: '/search',
+      detail: '/detail',
+      allepisode: null
+    }
+  },
+
+  flickreels: {
+    id: 'flickreels',
+    name: 'FlickReels',
+    description: 'Quick Flick Stories',
+    icon: '⚡',
+    color: 'from-green-500 to-emerald-600',
+    endpoints: {
+      trending: '/hotrank',
+      latest: '/latest',
+      foryou: '/foryou',
+      search: '/search',
+      detail: '/detail',
+      allepisode: null
+    }
+  },
+
+  freereels: {
+    id: 'freereels',
+    name: 'FreeReels',
+    description: 'Free Drama Reels',
+    icon: '🎬',
+    color: 'from-teal-500 to-cyan-600',
+    endpoints: {
+      trending: '/home',
+      latest: '/home',
+      foryou: '/foryou',
+      search: '/search',
+      detail: '/detail',
+      allepisode: null
     }
   }
 } as const;
@@ -123,6 +187,38 @@ async function fetchFromSource<T>(
   return fetchWithCache<T>(url);
 }
 
+// Transform ReelShort response format to Drama format
+function transformReelShortData(data: any): Drama[] {
+  if (!data || !data.data || !data.data.lists) return [];
+  
+  const dramas: Drama[] = [];
+  const lists = data.data.lists;
+  
+  for (const list of lists) {
+    if (list.episodes && Array.isArray(list.episodes)) {
+      for (const item of list.episodes) {
+        dramas.push({
+          bookId: item.episode_id || item.id || '',
+          bookName: item.name || '',
+          coverWap: item.cover || '',
+          cover: item.cover || '',
+          chapterCount: item.total_episode || 0,
+          introduction: item.desc || '',
+          tags: item.tags || [],
+          playCount: item.play_count || '',
+          rankVo: item.is_hot ? {
+            rankType: 1,
+            hotCode: item.play_count || '',
+            sort: 0
+          } : undefined
+        });
+      }
+    }
+  }
+  
+  return dramas;
+}
+
 // Transform Melolo response format to Drama format
 function transformMeloloData(data: any): Drama[] {
   if (!data || typeof data !== 'object') return [];
@@ -138,19 +234,19 @@ function transformMeloloData(data: any): Drama[] {
     }
     
     return {
-    bookId: book.book_id || book.media_id || '',
-    bookName: book.book_name || '',
-    coverWap: thumbUrl,
-    cover: thumbUrl,
-    chapterCount: book.serial_count || book.last_chapter_index || 0,
-    introduction: book.abstract || book.sub_abstract || '',
-    tags: book.stat_infos || [],
-    playCount: book.read_count || '',
-    rankVo: book.is_hot ? {
-      rankType: 1,
-      hotCode: book.read_count || '',
-      sort: 0
-    } : undefined
+      bookId: book.book_id || book.media_id || '',
+      bookName: book.book_name || '',
+      coverWap: thumbUrl,
+      cover: thumbUrl,
+      chapterCount: book.serial_count || book.last_chapter_index || 0,
+      introduction: book.abstract || book.sub_abstract || '',
+      tags: book.stat_infos || [],
+      playCount: book.read_count || '',
+      rankVo: book.is_hot ? {
+        rankType: 1,
+        hotCode: book.read_count || '',
+        sort: 0
+      } : undefined
     };
   });
 }
@@ -186,25 +282,80 @@ function transformNetShortData(data: any[]): Drama[] {
   return dramas;
 }
 
-// DramaBox API with graceful fallback
+// Transform FlickReels response format to Drama format
+function transformFlickReelsData(data: any): Drama[] {
+  if (!data || !Array.isArray(data)) return [];
+  
+  return data.map((item: any) => ({
+    bookId: item.id || item.drama_id || '',
+    bookName: item.title || item.name || '',
+    coverWap: item.poster || item.cover || '',
+    cover: item.poster || item.cover || '',
+    chapterCount: item.episode_count || 0,
+    introduction: item.description || '',
+    tags: item.tags || [],
+    playCount: item.views || '',
+    rankVo: item.rank ? {
+      rankType: 1,
+      hotCode: item.views || '',
+      sort: item.rank
+    } : undefined
+  }));
+}
+
+// Transform FreeReels response format to Drama format
+function transformFreeReelsData(data: any): Drama[] {
+  if (!data || !Array.isArray(data)) return [];
+  
+  return data.map((item: any) => ({
+    bookId: item.id || item.video_id || '',
+    bookName: item.title || '',
+    coverWap: item.thumbnail || item.cover || '',
+    cover: item.thumbnail || item.cover || '',
+    chapterCount: item.episodes || 0,
+    introduction: item.desc || '',
+    tags: item.categories || [],
+    playCount: item.play_count || '',
+    rankVo: item.is_popular ? {
+      rankType: 1,
+      hotCode: item.play_count || '',
+      sort: 0
+    } : undefined
+  }));
+}
+
+// Main API functions with source-specific transformations
 export async function getTrending(source: SourceType = 'dramabox'): Promise<Drama[]> {
   try {
     const data = await fetchFromSource<any>(source, 'trending');
     
-    // NetShort has different response format
+    // Apply source-specific transformations
     if (source === 'netshort') {
       const transformed = transformNetShortData(data);
       const result = transformed.map(d => ({ ...d, source }));
-      // Cache drama data for detail page
       result.forEach(drama => {
         localStorage.setItem(`drama_${source}_${drama.bookId}`, JSON.stringify(drama));
       });
       return result;
     }
     
-    // Melolo has different response format
+    if (source === 'reelshort') {
+      const transformed = transformReelShortData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
     if (source === 'melolo') {
       const transformed = transformMeloloData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
+    if (source === 'flickreels') {
+      const transformed = transformFlickReelsData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
+    if (source === 'freereels') {
+      const transformed = transformFreeReelsData(data);
       return transformed.map(d => ({ ...d, source }));
     }
     
@@ -219,20 +370,33 @@ export async function getLatest(source: SourceType = 'dramabox'): Promise<Drama[
   try {
     const data = await fetchFromSource<any>(source, 'latest');
     
-    // NetShort has different response format
+    // Apply source-specific transformations
     if (source === 'netshort') {
       const transformed = transformNetShortData(data);
       const result = transformed.map(d => ({ ...d, source }));
-      // Cache drama data for detail page
       result.forEach(drama => {
         localStorage.setItem(`drama_${source}_${drama.bookId}`, JSON.stringify(drama));
       });
       return result;
     }
     
-    // Melolo has different response format
+    if (source === 'reelshort') {
+      const transformed = transformReelShortData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
     if (source === 'melolo') {
       const transformed = transformMeloloData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
+    if (source === 'flickreels') {
+      const transformed = transformFlickReelsData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
+    if (source === 'freereels') {
+      const transformed = transformFreeReelsData(data);
       return transformed.map(d => ({ ...d, source }));
     }
     
@@ -247,15 +411,29 @@ export async function getForYou(source: SourceType = 'dramabox'): Promise<Drama[
   try {
     const data = await fetchFromSource<any>(source, 'foryou');
     
-    // NetShort has different response format
+    // Apply source-specific transformations
     if (source === 'netshort') {
       const transformed = transformNetShortData(data);
       const result = transformed.map(d => ({ ...d, source }));
-      // Cache drama data for detail page
       result.forEach(drama => {
         localStorage.setItem(`drama_${source}_${drama.bookId}`, JSON.stringify(drama));
       });
       return result;
+    }
+    
+    if (source === 'reelshort') {
+      const transformed = transformReelShortData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
+    if (source === 'flickreels') {
+      const transformed = transformFlickReelsData(data);
+      return transformed.map(d => ({ ...d, source }));
+    }
+    
+    if (source === 'freereels') {
+      const transformed = transformFreeReelsData(data);
+      return transformed.map(d => ({ ...d, source }));
     }
     
     return Array.isArray(data) ? data.map(d => ({ ...d, source })) : [];
@@ -337,94 +515,10 @@ export async function getDramaDetail(bookId: string, source: SourceType = 'drama
 
 export async function getAllEpisodes(bookId: string, source: SourceType = 'dramabox'): Promise<Episode[]> {
   try {
-    // NetShort uses different parameter name
-    const paramName = source === 'netshort' ? 'shortPlayId' : 'bookId';
-    const data = await fetchFromSource<any>(source, 'allepisode', `?${paramName}=${bookId}`);
-    
-    // NetShort has different response format - returns object with shortPlayEpisodeInfos array
-    if (source === 'netshort' && data && typeof data === 'object') {
-      const episodes = (data as any).shortPlayEpisodeInfos || [];
-      // Transform NetShort episode format
-      return episodes.map((ep: any) => ({
-        chapterId: ep.episodeId || '',
-        chapterIndex: ep.episodeNo || 0,
-        chapterName: `Episode ${ep.episodeNo}`,
-        isCharge: ep.isVip ? 1 : 0,
-        cdnList: [{
-          cdnDomain: '',
-          isDefault: 1,
-          videoPathList: [{
-            quality: 1080,
-            videoPath: ep.playVoucher || '',
-            isDefault: 1
-          }]
-        }]
-      }));
-    }
-    
+    const data = await fetchFromSource<Episode[]>(source, 'allepisode', `/${bookId}`);
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error(`Error fetching episodes for ${source}:`, error);
     return [];
   }
-}
-
-// Multi-source: Get content from all sources
-export async function getAllSourcesTrending(): Promise<Drama[]> {
-  const sources: SourceType[] = ['dramabox', 'netshort'];
-  const promises = sources.map(source => getTrending(source));
-  const results = await Promise.all(promises);
-  return results.flat();
-}
-
-export async function getAllSourcesLatest(): Promise<Drama[]> {
-  const sources: SourceType[] = ['dramabox', 'netshort'];
-  const promises = sources.map(source => getLatest(source));
-  const results = await Promise.all(promises);
-  return results.flat();
-}
-
-// Helper to check if endpoint is available for source
-export function isEndpointAvailable(source: SourceType, endpoint: keyof typeof SOURCES.dramabox.endpoints): boolean {
-  return SOURCES[source].endpoints[endpoint] !== null;
-}
-
-// Helper to get cover image URL
-export function getCoverUrl(drama: Drama): string {
-  return drama.coverWap || drama.cover || "/images/placeholder.jpg";
-}
-
-// Helper to get video URL from episode
-export function getVideoUrl(episode: Episode, preferredQuality: number = 720): string | null {
-  if (!episode.cdnList || episode.cdnList.length === 0) return null;
-  
-  const cdn = episode.cdnList.find(c => c.isDefault === 1) || episode.cdnList[0];
-  if (!cdn.videoPathList || cdn.videoPathList.length === 0) return null;
-  
-  // Try to find preferred quality, fallback to default or first available
-  const video = cdn.videoPathList.find(v => v.quality === preferredQuality) 
-    || cdn.videoPathList.find(v => v.isDefault === 1)
-    || cdn.videoPathList[0];
-  
-  return video?.videoPath || null;
-}
-
-// Clear cache (useful for manual refresh)
-export function clearCache(): void {
-  cache.clear();
-}
-
-// Get API info
-export function getAPIInfo() {
-  return {
-    apiBase: API_BASE,
-    provider: "Sansekai Multi-Source API",
-    sources: Object.values(SOURCES),
-    version: "2.1.0"
-  };
-}
-
-// Get source info
-export function getSourceInfo(source: SourceType) {
-  return SOURCES[source];
 }

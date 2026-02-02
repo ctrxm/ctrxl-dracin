@@ -15,12 +15,20 @@ interface SourceTabsProps {
 const sourceImages: Record<SourceType, string> = {
   dramabox: "/assets/dramabox-logo.jpg",
   netshort: "/assets/netshort-logo.jpg",
+  reelshort: "/assets/reelshort-logo.jpg",
+  melolo: "/assets/melolo-logo.jpg",
+  flickreels: "/assets/flickreels-logo.jpg",
+  freereels: "/assets/freereels-logo.jpg",
 };
 
 // Color mapping for each source
 const sourceColors: Record<SourceType, string> = {
   dramabox: "text-rose-400",
   netshort: "text-emerald-400",
+  reelshort: "text-pink-400",
+  melolo: "text-purple-400",
+  flickreels: "text-green-400",
+  freereels: "text-teal-400",
 };
 
 export default function SourceTabs({ activeSource, onSourceChange }: SourceTabsProps) {
