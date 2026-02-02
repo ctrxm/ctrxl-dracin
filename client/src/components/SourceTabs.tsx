@@ -21,23 +21,15 @@ const sourceImages: Record<SourceType, string> = {
   freereels: "/assets/freereels-logo.jpg",
 };
 
-// Color mapping for each source
-const sourceColors: Record<SourceType, string> = {
-  dramabox: "text-rose-400",
-  netshort: "text-emerald-400",
-  reelshort: "text-pink-400",
-  melolo: "text-purple-400",
-  flickreels: "text-green-400",
-  freereels: "text-teal-400",
-};
-
 export default function SourceTabs({ activeSource, onSourceChange }: SourceTabsProps) {
   const sources = Object.values(SOURCES);
+  
+  console.log("SourceTabs rendering with sources:", sources.length, sources.map(s => s.id));
 
   return (
-    <div className="relative">
+    <div className="relative mb-6">
       {/* Scrollable container */}
-      <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4">
+      <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-2 px-4">
         {sources.map((source) => {
           const isActive = activeSource === source.id;
           const imageUrl = sourceImages[source.id as SourceType];
@@ -45,10 +37,13 @@ export default function SourceTabs({ activeSource, onSourceChange }: SourceTabsP
           return (
             <motion.button
               key={source.id}
-              onClick={() => onSourceChange(source.id as SourceType)}
+              onClick={() => {
+                console.log("Source clicked:", source.id);
+                onSourceChange(source.id as SourceType);
+              }}
               className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all duration-300 ${
                 isActive
-                  ? "text-white"
+                  ? "text-white shadow-lg"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
               }`}
               whileTap={{ scale: 0.95 }}
@@ -63,13 +58,17 @@ export default function SourceTabs({ activeSource, onSourceChange }: SourceTabsP
               )}
               
               {/* Content */}
-              <span className="relative flex items-center gap-2">
+              <span className="relative flex items-center gap-2 z-10">
                 <img 
                   src={imageUrl} 
                   alt={source.name}
                   className="w-5 h-5 rounded object-cover"
+                  onError={(e) => {
+                    console.error("Failed to load image:", imageUrl);
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
-                <span className="hidden sm:inline">{source.name}</span>
+                <span>{source.name}</span>
               </span>
             </motion.button>
           );
