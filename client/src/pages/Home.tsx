@@ -29,33 +29,26 @@ export default function Home() {
   const continueWatching = getContinueWatching();
 
   useEffect(() => {
-    // Debounce source changes to prevent rapid API calls
-    const timeoutId = setTimeout(() => {
-      async function fetchData() {
-        try {
-          setLoading(true);
-          // Parallel loading with Promise.all (cache will prevent rate limiting)
-          const [trendingData, latestData, forYouData] = await Promise.all([
-            getTrending(activeSource),
-            getLatest(activeSource),
-            getForYou(activeSource),
-          ]);
-          
-          setTrending(trendingData);
-          setLatest(latestData);
-          setForYou(forYouData);
-          setError(null);
-        } catch (err) {
-          setError("Failed to load data. Please try again.");
-          console.error(err);
-        } finally {
-          setLoading(false);
-        }
+    async function fetchData() {
+      try {
+        setLoading(true);
+        const [trendingData, latestData, forYouData] = await Promise.all([
+          getTrending(activeSource),
+          getLatest(activeSource),
+          getForYou(activeSource),
+        ]);
+        setTrending(trendingData);
+        setLatest(latestData);
+        setForYou(forYouData);
+        setError(null);
+      } catch (err) {
+        setError("Failed to load data. Please try again.");
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-      fetchData();
-    }, 200); // 200ms debounce (reduced from 300ms)
-    
-    return () => clearTimeout(timeoutId);
+    }
+    fetchData();
   }, [activeSource]);
 
   useEffect(() => {
