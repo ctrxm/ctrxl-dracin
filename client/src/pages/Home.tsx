@@ -29,26 +29,35 @@ export default function Home() {
   const continueWatching = getContinueWatching();
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        const [trendingData, latestData, forYouData] = await Promise.all([
-          getTrending(activeSource),
-          getLatest(activeSource),
-          getForYou(activeSource),
-        ]);
-        setTrending(trendingData);
-        setLatest(latestData);
-        setForYou(forYouData);
-        setError(null);
-      } catch (err) {
-        setError("Failed to load data. Please try again.");
-        console.error(err);
-      } finally {
-        setLoading(false);
+    // Debounce source changes to prevent rapid API calls
+    const timeoutId = setTimeout(() => {
+      async function fetchData() {
+        try {
+          setLoading(true);
+          // Fetch sequentially with small delays to avoid rate limiting
+          const trendingData = await getTrending(activeSource);
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const latestData = await getLatest(activeSource);
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const forYouData = await getForYou(activeSource);
+          
+          setTrending(trendingData);
+          setLatest(latestData);
+          setForYou(forYouData);
+          setError(null);
+        } catch (err) {
+          setError("Failed to load data. Please try again.");
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
       }
-    }
-    fetchData();
+      fetchData();
+    }, 300); // 300ms debounce
+    
+    return () => clearTimeout(timeoutId);
   }, [activeSource]);
 
   useEffect(() => {

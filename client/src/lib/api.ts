@@ -148,24 +148,145 @@ export interface DramaDetail extends Drama {
   isEntry?: number;
 }
 
-// Simple cache for better performance
-const cache = new Map<string, { data: unknown; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+// Advanced cache system with localStorage persistence
+interface CacheEntry {
+  data: unknown;
+  timestamp: number;
+  source: string;
+}
 
-async function fetchWithCache<T>(url: string): Promise<T> {
-  const cached = cache.get(url);
+const memoryCache = new Map<string, CacheEntry>();
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes (increased from 5)
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+// Request queue to prevent too many simultaneous requests
+let requestQueue: Promise<any> = Promise.resolve();
+const activeRequests = new Set<string>();
+
+// Helper to sleep/delay
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Load cache from localStorage on init
+function loadCacheFromStorage() {
+  try {
+    const stored = localStorage.getItem('api_cache');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      Object.entries(parsed).forEach(([key, value]) => {
+        const entry = value as CacheEntry;
+        if (Date.now() - entry.timestamp < CACHE_DURATION) {
+          memoryCache.set(key, entry);
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to load cache from storage:', e);
+  }
+}
+
+// Save cache to localStorage
+function saveCacheToStorage() {
+  try {
+    const cacheObj: Record<string, CacheEntry> = {};
+    memoryCache.forEach((value, key) => {
+      if (Date.now() - value.timestamp < CACHE_DURATION) {
+        cacheObj[key] = value;
+      }
+    });
+    localStorage.setItem('api_cache', JSON.stringify(cacheObj));
+  } catch (e) {
+    console.warn('Failed to save cache to storage:', e);
+  }
+}
+
+// Load cache on module init
+loadCacheFromStorage();
+
+// Fetch with advanced caching, retry, and rate limiting
+async function fetchWithCache<T>(url: string, source: string = 'unknown'): Promise<T> {
+  // Check memory cache first
+  const cached = memoryCache.get(url);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`[Cache HIT] ${url}`);
     return cached.data as T;
   }
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
+  // Check if request is already in progress
+  if (activeRequests.has(url)) {
+    console.log(`[Waiting] Request already in progress: ${url}`);
+    await sleep(500);
+    const nowCached = memoryCache.get(url);
+    if (nowCached) return nowCached.data as T;
   }
-  
-  const data = await response.json();
-  cache.set(url, { data, timestamp: Date.now() });
-  return data;
+
+  activeRequests.add(url);
+
+  try {
+    // Retry mechanism
+    let lastError: Error | null = null;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        console.log(`[Fetch] Attempt ${attempt}/${MAX_RETRIES}: ${url}`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          if (response.status === 429) {
+            // Rate limited - wait longer
+            console.warn(`[Rate Limited] Waiting ${RETRY_DELAY * attempt}ms...`);
+            await sleep(RETRY_DELAY * attempt);
+            continue;
+          }
+          throw new Error(`API Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Save to cache
+        const entry: CacheEntry = { data, timestamp: Date.now(), source };
+        memoryCache.set(url, entry);
+        saveCacheToStorage();
+        
+        console.log(`[Cache SET] ${url}`);
+        return data;
+        
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`[Fetch Failed] Attempt ${attempt}:`, error.message);
+        
+        if (attempt < MAX_RETRIES) {
+          // Exponential backoff
+          const delay = RETRY_DELAY * Math.pow(2, attempt - 1);
+          console.log(`[Retry] Waiting ${delay}ms before retry...`);
+          await sleep(delay);
+        }
+      }
+    }
+    
+    // All retries failed - check if we have stale cache
+    if (cached) {
+      console.warn('[Using Stale Cache] All retries failed, using stale data');
+      return cached.data as T;
+    }
+    
+    throw lastError || new Error('Failed to fetch after retries');
+    
+  } finally {
+    activeRequests.delete(url);
+  }
 }
 
 // Generic function to fetch from any source with endpoint mapping
@@ -184,7 +305,7 @@ async function fetchFromSource<T>(
   }
   
   const url = `${API_BASE}/${source}${endpoint}${params || ''}`;
-  return fetchWithCache<T>(url);
+  return fetchWithCache<T>(url, source);
 }
 
 // Transform ReelShort response format to Drama format
