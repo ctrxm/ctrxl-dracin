@@ -34,14 +34,12 @@ export default function Home() {
       async function fetchData() {
         try {
           setLoading(true);
-          // Fetch sequentially with small delays to avoid rate limiting
-          const trendingData = await getTrending(activeSource);
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          const latestData = await getLatest(activeSource);
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          const forYouData = await getForYou(activeSource);
+          // Parallel loading with Promise.all (cache will prevent rate limiting)
+          const [trendingData, latestData, forYouData] = await Promise.all([
+            getTrending(activeSource),
+            getLatest(activeSource),
+            getForYou(activeSource),
+          ]);
           
           setTrending(trendingData);
           setLatest(latestData);
@@ -55,7 +53,7 @@ export default function Home() {
         }
       }
       fetchData();
-    }, 300); // 300ms debounce
+    }, 200); // 200ms debounce (reduced from 300ms)
     
     return () => clearTimeout(timeoutId);
   }, [activeSource]);

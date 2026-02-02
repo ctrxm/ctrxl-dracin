@@ -156,9 +156,9 @@ interface CacheEntry {
 }
 
 const memoryCache = new Map<string, CacheEntry>();
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes (increased from 5)
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const MAX_RETRIES = 2; // Reduced from 3
+const RETRY_DELAY = 500; // 500ms (reduced from 1s)
 
 // Request queue to prevent too many simultaneous requests
 let requestQueue: Promise<any> = Promise.resolve();
@@ -230,7 +230,7 @@ async function fetchWithCache<T>(url: string, source: string = 'unknown'): Promi
         console.log(`[Fetch] Attempt ${attempt}/${MAX_RETRIES}: ${url}`);
         
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout (increased for video)
         
         const response = await fetch(url, {
           signal: controller.signal,
@@ -245,9 +245,16 @@ async function fetchWithCache<T>(url: string, source: string = 'unknown'): Promi
 
         if (!response.ok) {
           if (response.status === 429) {
-            // Rate limited - wait longer
-            console.warn(`[Rate Limited] Waiting ${RETRY_DELAY * attempt}ms...`);
-            await sleep(RETRY_DELAY * attempt);
+            // Rate limited - wait and retry
+            const waitTime = RETRY_DELAY * (attempt + 1);
+            console.warn(`[Rate Limited] Waiting ${waitTime}ms...`);
+            await sleep(waitTime);
+            continue;
+          }
+          if (response.status >= 500) {
+            // Server error - retry
+            console.warn(`[Server Error ${response.status}] Retrying...`);
+            await sleep(RETRY_DELAY);
             continue;
           }
           throw new Error(`API Error: ${response.status}`);
